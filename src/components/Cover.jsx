@@ -49,11 +49,11 @@ export function CoverArt({ seed, label }) {
 }
 
 /** A photo if the event has one, generated art otherwise. */
-export default function Cover({ item, className = '' }) {
+export default function Cover({ item, className = '', full = false }) {
   return (
     <div className={`cover ${className}`}>
       {item.cover ? (
-        <img src={item.cover} alt={`${item.title}`} loading="lazy" decoding="async" />
+        <img src={full ? item.cover : item.coverThumb} alt={item.title} loading="lazy" decoding="async" />
       ) : (
         <CoverArt seed={item.slug} label={yearOf(item.date) || item.title} />
       )}

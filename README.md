@@ -14,19 +14,30 @@ Built with **React + Vite + React Router**. Every page is also prerendered to it
 
 ## Admin dashboard (`/admin/`)
 
-Open `https://ovini.me/admin/` to manage content without touching code: write, edit, draft and delete posts; add event galleries and upload photos; edit the home, about, achievements, experience and contact text; replace the portrait.
+A dashboard with a left sidebar: **Overview**, **Journal**, **Gallery** and **Site details**. Every save is a commit to this repository, which redeploys the site in a few minutes.
 
-There is no server. The dashboard talks to the GitHub API from your browser, and every save is a commit to this repository, which redeploys the site in a few minutes.
+**First visit on a device:** choose an admin username and password and paste a [fine-grained GitHub token](https://github.com/settings/personal-access-tokens/new) (only this repository, **Contents: Read and write**, with an expiry date). After that you log in with just the username and password.
 
-**Sign in** with a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) created by the repository owner:
-
-1. Repository access: only this repository.
-2. Permissions: **Contents: Read and write** (nothing else).
-3. Set an expiry date.
-
-Security notes: the page itself is public (it is hidden from search engines) but can do nothing without a token. The token is kept in your browser, for the tab only unless you tick "Stay signed in". Treat it like a password, and delete it on GitHub if it ever leaks.
+How the login works: there is no server. The token is encrypted with your password and stored in that browser only. This protects the token on the device; it is not a shared account, so each device is set up once. If you forget the password, choose "Set up this device again" and paste a token. Delete the token on GitHub if it ever leaks.
 
 After editing in the dashboard, run `git pull` before changing files on your computer.
+
+## Photos from Google Drive
+
+Original photos live in the Drive folder set in `src/content/drive.json`. The folder must be shared as **Anyone with the link: Viewer**.
+
+```
+PORTFOLIO/
+  faurs-2026/          <- named after the event folder (or the event title)
+    01.jpg
+    02.jpg
+  nova-25/
+    group.jpg
+```
+
+Each build copies the photos into the site at 1600px and 800px, so visitors never load from Drive. The site rebuilds on every push, once a day, and when you press **Publish Drive photos** in the dashboard. To fetch them locally, run `npm run sync:photos`.
+
+Without a `GOOGLE_API_KEY` repository secret the build reads the public folder page, which Google could change. Adding a Drive API key makes it use the official API. If a sync fails during a deploy, the deploy stops and the live site stays as it was.
 
 ## Run locally
 

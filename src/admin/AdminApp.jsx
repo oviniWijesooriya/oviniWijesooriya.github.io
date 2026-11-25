@@ -1,115 +1,60 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import drive from '../content/drive.json'
 import { pageMeta } from '../lib/seo-data'
 import { useSeo } from '../lib/useSeo'
 import EventsPanel from './EventsPanel'
 import { createClient } from './github'
 import { loadContent } from './load'
+import Login from './Login'
+import Overview from './Overview'
 import PostsPanel from './PostsPanel'
 import SitePanel from './SitePanel'
+import { createAccount, endSession, readSession, startSession, unlock } from './vault'
 import './admin.css'
 
-const KEY = 'ovini-admin'
-const DEFAULT_REPO = 'oviniWijesooriya/oviniWijesooriya.github.io'
 const TABS = [
-  ['posts', 'Journal'],
-  ['events', 'Gallery'],
-  ['site', 'Site details'],
+  ['overview', 'Overview', 'M4 4h7v7H4zM13 4h7v4h-7zM13 11h7v9h-7zM4 14h7v6H4z'],
+  ['posts', 'Journal', 'M5 4h14v16H5zM8 9h8M8 13h8M8 17h5'],
+  ['events', 'Gallery', 'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9.5h.01'],
+  ['site', 'Site details', 'M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4'],
 ]
 
-const stored = () => {
-  try {
-    return JSON.parse(sessionStorage.getItem(KEY) || localStorage.getItem(KEY))
-  } catch {
-    return null
-  }
-}
-
-const forget = () => {
-  sessionStorage.removeItem(KEY)
-  localStorage.removeItem(KEY)
-}
-
-function SignIn({ onSignIn, busy, error }) {
-  const [form, setForm] = useState({ token: '', repo: DEFAULT_REPO, branch: 'master', remember: false })
-  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
-  return (
-    <main className="a-signin">
-      <h1>Site admin</h1>
-      <p>Sign in with a GitHub token to edit posts, galleries and site details.</p>
-      <form
-        className="a-form"
-        onSubmit={(e) => {
-          e.preventDefault()
-          onSignIn({ ...form, token: form.token.trim() })
-        }}
-      >
-        <label className="a-field">
-          <span>GitHub token</span>
-          <input type="password" required autoComplete="off" value={form.token} onChange={set('token')} />
-        </label>
-        <label className="a-field">
-          <span>Repository</span>
-          <input required value={form.repo} onChange={set('repo')} />
-        </label>
-        <label className="a-field">
-          <span>Branch</span>
-          <input required value={form.branch} onChange={set('branch')} />
-        </label>
-        <label className="a-check">
-          <input type="checkbox" checked={form.remember} onChange={set('remember')} /> Stay signed in on this device (only on your own computer)
-        </label>
-        {error && (
-          <p className="a-error" role="alert">
-            {error}
-          </p>
-        )}
-        <button type="submit" className="a-btn" disabled={busy}>
-          {busy ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
-      <details className="a-help">
-        <summary>How to get a token</summary>
-        <ol>
-          <li>
-            On GitHub, signed in as the repository owner, open{' '}
-            <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">
-              new fine-grained token
-            </a>
-            .
-          </li>
-          <li>Under Repository access choose “Only select repositories” and pick this website’s repository.</li>
-          <li>Under Permissions, set Contents to “Read and write”. Nothing else is needed.</li>
-          <li>Set an expiry date, create the token and paste it above.</li>
-        </ol>
-        <p>The token stays in this browser and is only ever sent to GitHub. Treat it like a password.</p>
-      </details>
-    </main>
-  )
-}
+const Icon = ({ d }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d={d} />
+  </svg>
+)
 
 export default function AdminApp() {
   useSeo(pageMeta('admin'))
   const [client, setClient] = useState(null)
   const [content, setContent] = useState(null)
-  const [tab, setTab] = useState('posts')
+  const [user, setUser] = useState('')
+  const [tab, setTab] = useState('overview')
+  const [menu, setMenu] = useState(false)
+  const [postEditing, setPostEditing] = useState(null) // null = list, '' = new, slug = existing
+  const [eventEditing, setEventEditing] = useState(null)
+  const [section, setSection] = useState('home')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState(null) // { type: 'ok' | 'error', text }
-  const [section, setSection] = useState('home')
+  const resumed = useRef(false)
 
   const fail = useCallback((text) => setNotice({ type: 'error', text }), [])
 
-  const signIn = useCallback(
-    async (credentials) => {
+  /** `getCredentials` unlocks, creates or resumes a login; then the content is loaded from GitHub. */
+  const enter = useCallback(
+    async (username, getCredentials, afterVerify) => {
       setBusy(true)
       setNotice(null)
       try {
+        const credentials = await getCredentials()
         const next = createClient(credentials)
         await next.verify()
+        await afterVerify?.(credentials)
         const loaded = await loadContent(next)
-        const { remember, ...keep } = credentials
-        forget()
-        ;(remember ? localStorage : sessionStorage).setItem(KEY, JSON.stringify({ ...keep, remember }))
+        startSession(credentials, username)
+        setUser(username)
         setClient(next)
         setContent(loaded)
       } catch (error) {
@@ -122,9 +67,21 @@ export default function AdminApp() {
   )
 
   useEffect(() => {
-    const saved = stored()
-    if (saved?.token) signIn(saved)
-  }, [signIn])
+    const session = readSession()
+    if (session?.token && !resumed.current) {
+      resumed.current = true
+      enter(session.username, async () => ({ token: session.token, repo: session.repo, branch: session.branch }))
+    }
+  }, [enter])
+
+  const login = (username, password) => enter(username, () => unlock(username, password))
+  // The account is only saved once GitHub accepts the token.
+  const setup = (username, password, credentials) =>
+    enter(
+      username,
+      async () => credentials,
+      () => createAccount(username, password, credentials),
+    )
 
   const save = async (message, changes, expect) => {
     setBusy(true)
@@ -147,50 +104,99 @@ export default function AdminApp() {
     return true
   }
 
-  const signOut = () => {
-    forget()
+  // A new commit rebuilds the site, and the build copies the photos from Drive.
+  const syncDrive = () =>
+    save('Publish photos from Google Drive', [{ path: 'src/content/drive.json', text: `${JSON.stringify({ ...drive, requestedAt: new Date().toISOString() }, null, 2)}\n` }])
+
+  const logout = () => {
+    endSession()
     setClient(null)
     setContent(null)
     setNotice(null)
+    setPostEditing(null)
+    setEventEditing(null)
+    setTab('overview')
+  }
+
+  const go = (id) => {
+    setTab(id)
+    setMenu(false)
+    window.scrollTo(0, 0)
+  }
+  const openPost = (slug) => {
+    setPostEditing(slug)
+    go('posts')
+  }
+  const openEvent = (slug) => {
+    setEventEditing(slug)
+    go('events')
   }
 
   if (!client || !content) {
-    return <SignIn onSignIn={signIn} busy={busy} error={notice?.type === 'error' ? notice.text : ''} />
+    return <Login onLogin={login} onSetup={setup} busy={busy} error={notice?.type === 'error' ? notice.text : ''} />
   }
+
+  const title = TABS.find(([id]) => id === tab)[1]
 
   return (
     <div className="admin">
-      <header className="a-header">
-        <strong>Site admin</strong>
-        <nav aria-label="Admin sections">
-          {TABS.map(([id, label]) => (
-            <button key={id} type="button" aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}>
-              {label}
-            </button>
-          ))}
-        </nav>
-        <div className="a-header-end">
-          <Link to="/" target="_blank">
-            View site
-          </Link>
-          <button type="button" className="a-link" onClick={signOut}>
-            Sign out
+      <aside className={`a-side ${menu ? 'is-open' : ''}`}>
+        <div className="a-side-top">
+          <p className="a-brand">
+            Ovini<span>.</span>
+          </p>
+          <button type="button" className="a-menu" aria-expanded={menu} aria-controls="a-side-body" onClick={() => setMenu((m) => !m)}>
+            {menu ? 'Close' : 'Menu'}
           </button>
         </div>
-      </header>
-      <main className="a-main">
-        {/* Panels stay mounted so unsaved edits survive switching tabs. */}
-        <div hidden={tab !== 'posts'}>
-          <PostsPanel posts={content.posts} events={content.events} busy={busy} save={save} />
+        <div className="a-side-body" id="a-side-body">
+          <nav aria-label="Admin sections">
+            {TABS.map(([id, label, icon]) => (
+              <button key={id} type="button" aria-current={tab === id ? 'page' : undefined} onClick={() => go(id)}>
+                <Icon d={icon} />
+                {label}
+              </button>
+            ))}
+          </nav>
+          <div className="a-side-foot">
+            <Link to="/" target="_blank">
+              <Icon d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" />
+              View site
+            </Link>
+            <button type="button" onClick={logout}>
+              <Icon d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9" />
+              Log out
+            </button>
+          </div>
         </div>
-        <div hidden={tab !== 'events'}>
-          <EventsPanel events={content.events} client={client} busy={busy} save={save} fail={fail} />
-        </div>
-        <div hidden={tab !== 'site'}>
-          {/* Keyed on the file version: saving a post doesn't wipe unsaved site edits. */}
-          <SitePanel key={content.siteSha} site={content.site} sha={content.siteSha} section={section} setSection={setSection} busy={busy} save={save} fail={fail} />
-        </div>
-      </main>
+      </aside>
+
+      <div className="a-content">
+        <header className="a-top">
+          <h1>{title}</h1>
+          <p className="a-user">
+            <span aria-hidden="true">{(user || 'A').slice(0, 1).toUpperCase()}</span>
+            {user}
+          </p>
+        </header>
+        <main className="a-main">
+          {/* Panels stay mounted so unsaved edits survive switching sections. */}
+          <div hidden={tab !== 'overview'}>
+            <Overview content={content} busy={busy} openPost={openPost} openEvent={openEvent} syncDrive={syncDrive} />
+          </div>
+          <div hidden={tab !== 'posts'}>
+            <PostsPanel posts={content.posts} events={content.events} busy={busy} save={save} editing={postEditing} setEditing={setPostEditing} />
+          </div>
+          <div hidden={tab !== 'events'}>
+            <EventsPanel events={content.events} client={client} busy={busy} save={save} fail={fail} editing={eventEditing} setEditing={setEventEditing} />
+          </div>
+          <div hidden={tab !== 'site'}>
+            {/* Keyed on the file version: saving a post doesn't wipe unsaved site edits. */}
+            <SitePanel key={content.siteSha} site={content.site} sha={content.siteSha} section={section} setSection={setSection} busy={busy} save={save} fail={fail} />
+          </div>
+        </main>
+      </div>
+
       {notice && (
         <div className={`a-notice ${notice.type}`} role={notice.type === 'error' ? 'alert' : 'status'}>
           <span>{notice.text}</span>

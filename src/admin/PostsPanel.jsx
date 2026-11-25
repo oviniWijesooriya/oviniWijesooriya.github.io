@@ -101,8 +101,7 @@ function PostForm({ post, posts, events, busy, save, close }) {
   )
 }
 
-export default function PostsPanel({ posts, events, busy, save }) {
-  const [editing, setEditing] = useState(null) // null = list, '' = new, slug = existing
+export default function PostsPanel({ posts, events, busy, save, editing, setEditing }) {
   const sorted = [...posts].sort((a, b) => byNewest({ date: '', ...a.data }, { date: '', ...b.data }))
 
   if (editing !== null) {

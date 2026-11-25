@@ -33,7 +33,7 @@ export default function Post() {
         </p>
       </header>
 
-      {event && <Cover item={event} className="post-cover" />}
+      {event && <Cover item={event} className="post-cover" full />}
 
       <Prose markdown={post.body} className="post-body" />
 

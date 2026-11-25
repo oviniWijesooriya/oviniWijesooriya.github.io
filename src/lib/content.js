@@ -5,6 +5,8 @@ const postFiles = import.meta.glob('../content/posts/*.md', { eager: true, query
 const eventFiles = import.meta.glob('../content/events/*/index.md', { eager: true, query: '?raw', import: 'default' })
 const imageFiles = import.meta.glob('../content/events/*/*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,avif}', { eager: true, query: '?url', import: 'default' })
 
+const thumbFiles = import.meta.glob('../content/events/*/thumbs/*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,avif}', { eager: true, query: '?url', import: 'default' })
+
 const slugOf = (path) => path.split('/').slice(-1)[0].replace(/\.md$/, '')
 const eventSlugOf = (path) => path.split('/').slice(-2)[0]
 
@@ -19,7 +21,8 @@ const photosBySlug = {}
 for (const [path, url] of Object.entries(imageFiles)) {
   const slug = eventSlugOf(path)
   const name = path.split('/').pop()
-  ;(photosBySlug[slug] ||= []).push({ src: url, name })
+  const thumb = thumbFiles[path.replace(/([^/]+)$/, 'thumbs/$1')] || url
+  ;(photosBySlug[slug] ||= []).push({ src: url, thumb, name })
 }
 
 export const events = Object.entries(eventFiles)
@@ -27,8 +30,8 @@ export const events = Object.entries(eventFiles)
     const slug = eventSlugOf(path)
     const event = toEvent(slug, raw)
     const photos = (photosBySlug[slug] || []).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
-    const cover = (event.cover && photos.find((p) => p.name === event.cover)?.src) || photos[0]?.src || ''
-    return { ...event, photos, cover }
+    const chosen = photos.find((p) => p.name === event.cover) || photos[0]
+    return { ...event, photos, cover: chosen?.src || '', coverThumb: chosen?.thumb || '' }
   })
   .filter((e) => !e.draft)
   .sort(byNewest)

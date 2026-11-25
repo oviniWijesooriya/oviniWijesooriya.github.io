@@ -5,6 +5,8 @@ import { resizeImage, slugify, toMarkdownFile } from './files'
 
 const DATE_PATTERN = '\\d{4}(-\\d{2}(-\\d{2})?)?'
 
+const filesOf = (photo) => [photo.path, photo.thumbPath].filter(Boolean).map((path) => ({ path, delete: true }))
+
 /** Thumbnail of a photo already in the repository (it may not be deployed yet, so read it from GitHub). */
 function RepoPhoto({ client, photo }) {
   const [url, setUrl] = useState('')
@@ -54,7 +56,8 @@ function EventForm({ event, events, client, busy, save, close, fail }) {
     try {
       for (const file of files) {
         const resized = await resizeImage(file)
-        setAdded((list) => [...list, { ...resized, label: file.name, key: `${file.name}-${list.length}` }])
+        const thumb = await resizeImage(file, 800, 0.8)
+        setAdded((list) => [...list, { ...resized, thumb: thumb.base64, label: file.name, key: `${file.name}-${list.length}` }])
       }
     } catch (error) {
       fail(error.message)
@@ -75,8 +78,14 @@ function EventForm({ event, events, client, busy, save, close, fail }) {
     const dir = `src/content/events/${slug}`
     // New photos are numbered after the highest existing number so they keep their order.
     let next = Math.max(0, ...photos.map((p) => parseInt(p.name, 10) || 0))
-    const uploads = added.map((a) => ({ path: `${dir}/${String(++next).padStart(3, '0')}.jpg`, base64: a.base64 }))
-    const deletions = photos.filter((p) => removed.includes(p.name)).map((p) => ({ path: p.path, delete: true }))
+    const uploads = added.flatMap((a) => {
+      const name = `${String(++next).padStart(3, '0')}.jpg`
+      return [
+        { path: `${dir}/${name}`, base64: a.base64 },
+        { path: `${dir}/thumbs/${name}`, base64: a.thumb },
+      ]
+    })
+    const deletions = photos.filter((p) => removed.includes(p.name)).flatMap((p) => filesOf(p))
     const { body, ...meta } = form
     if (removed.includes(meta.cover)) meta.cover = ''
     const index = `${dir}/index.md`
@@ -89,7 +98,7 @@ function EventForm({ event, events, client, busy, save, close, fail }) {
   }
 
   const remove = async () => {
-    const changes = [event.path, ...photos.map((p) => p.path)].map((path) => ({ path, delete: true }))
+    const changes = [{ path: event.path, delete: true }, ...photos.flatMap((p) => filesOf(p))]
     if (await save(`Delete event: ${event.data.title}`, changes, { [event.path]: event.sha })) close()
   }
 
@@ -135,7 +144,9 @@ function EventForm({ event, events, client, busy, save, close, fail }) {
 
       <fieldset className="a-list">
         <legend>Photos</legend>
-        <p className="a-hint">Photos are resized and stripped of location data before upload. Only add photos you have permission to publish.</p>
+        <p className="a-hint">
+          Photos are resized and stripped of location data before upload. Photos kept in Google Drive are not listed here. Only add photos you have permission to publish.
+        </p>
         <ul className="a-photos">
           {photos.map((p) => {
             const gone = removed.includes(p.name)
@@ -185,8 +196,7 @@ function EventForm({ event, events, client, busy, save, close, fail }) {
   )
 }
 
-export default function EventsPanel({ events, client, busy, save, fail }) {
-  const [editing, setEditing] = useState(null)
+export default function EventsPanel({ events, client, busy, save, fail, editing, setEditing }) {
   const sorted = [...events].sort((a, b) => byNewest({ date: '', ...a.data }, { date: '', ...b.data }))
 
   if (editing !== null) {

@@ -48,7 +48,7 @@ export default function Event() {
             {event.photos.map((p, i) => (
               <li key={p.src}>
                 <button type="button" className="photo" onClick={() => setActive(i)} aria-label={`Open photo ${i + 1} of ${event.photos.length}`}>
-                  <img src={p.src} alt={`${event.title}, photo ${i + 1}`} loading="lazy" decoding="async" />
+                  <img src={p.thumb} alt={`${event.title}, photo ${i + 1}`} loading="lazy" decoding="async" />
                 </button>
               </li>
             ))}

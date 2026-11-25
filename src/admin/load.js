@@ -21,8 +21,12 @@ export async function loadContent(client) {
       .map(async (f) => {
         const dir = f.path.slice(0, -'index.md'.length)
         const photos = files
-          .filter((p) => p.path.startsWith(dir) && IMAGE_RE.test(p.path))
-          .map((p) => ({ path: p.path, sha: p.sha, name: p.path.slice(dir.length) }))
+          .filter((p) => p.path.startsWith(dir) && IMAGE_RE.test(p.path) && !p.path.slice(dir.length).includes('/'))
+          .map((p) => {
+            const name = p.path.slice(dir.length)
+            const thumb = files.find((t) => t.path === `${dir}thumbs/${name}`)
+            return { path: p.path, sha: thumb?.sha || p.sha, thumbPath: thumb?.path, name }
+          })
           .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
         return { ...(await read(f)), slug: dir.split('/').slice(-2)[0], photos }
       }),

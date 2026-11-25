@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { PostRow, EventCard } from '../components/Cards'
+import Rail from '../components/Rail'
 import site, { faurs } from '../data'
 import { events, getEvent, posts } from '../lib/content'
 import { pageMeta } from '../lib/seo-data'
@@ -113,21 +114,21 @@ export default function Home() {
       </section>
 
       <section className="block" aria-labelledby="gallery-h">
-        <div className="container block-head">
-          <h2 id="gallery-h" className="section-title">
-            Events in photos
-          </h2>
-          <Link className="text-link" to="/gallery/">
-            Open the gallery
-          </Link>
-        </div>
-        <ul className="rail" aria-label="Event galleries">
+        <Rail
+          id="gallery-h"
+          title="Events in photos"
+          action={
+            <Link className="text-link" to="/gallery/">
+              Open the gallery
+            </Link>
+          }
+        >
           {rail.map((e) => (
             <li key={e.slug}>
               <EventCard event={e} />
             </li>
           ))}
-        </ul>
+        </Rail>
       </section>
     </>
   )

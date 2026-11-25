@@ -3,3 +3,5 @@ dist
 .DS_Store
 *.log
 .vercel
+# photos copied from Google Drive at build time
+src/content/events/**/drive-*

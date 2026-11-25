@@ -291,11 +291,22 @@ main:focus { outline: none; }
 .event-card-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 14px; color: var(--muted); }
 
 .rail {
-  display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x mandatory;
+  display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain;
   padding: 8px max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter))) 24px;
   scroll-padding-inline: max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter)));
 }
+.rail::-webkit-scrollbar { display: none; }
 .rail li { flex: 0 0 min(340px, 78vw); scroll-snap-align: start; }
+.rail-tools { display: flex; align-items: center; gap: 10px; }
+.rail-tools .text-link { margin-right: 14px; }
+.rail-btn {
+  display: inline-grid; place-items: center; width: 48px; height: 48px; padding: 0;
+  border: 2px solid var(--ink); border-radius: 50%; background: transparent; cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s var(--ease);
+}
+.rail-btn:hover:not(:disabled) { background: var(--ink); color: var(--chalk); }
+.rail-btn:active:not(:disabled) { transform: scale(0.94); }
+.rail-btn:disabled { opacity: 0.25; cursor: default; }
 
 .event-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 40px 28px; margin-top: 24px; }
 .event-grid li { grid-column: span 4; }
