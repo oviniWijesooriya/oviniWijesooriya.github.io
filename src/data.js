@@ -6,17 +6,6 @@ export const contact = {
   facebook: 'https://www.facebook.com/OvWijesuriya',
 }
 
-export const roles = ['Food Scientist', 'Emerging Researcher', 'Student Leader', 'Public Speaker']
-
-export const marqueeWords = ['Food Science', 'Research', 'Leadership', 'Public Speaking', 'Digital Marketing', 'Event Compering']
-
-export const stats = [
-  { n: 4, label: 'Awards at FAuRS 2026, including the Gold Medal' },
-  { n: 8, label: 'University leadership roles since 2024' },
-  { n: 2, label: 'Countries presented in: Sri Lanka & Indonesia' },
-  { n: 2, label: 'Qualifications: BSc (Hons) Food Science & Tech + Diploma in IT' },
-]
-
 export const faurs = [
   { tag: 'Best', title: 'Best Presenter', sub: 'Theme: Technological Interventions and Applications in Agriculture' },
   { tag: '1st', title: 'Scientific Eye Photography', sub: 'Winner. The photo is featured on the cover of Hanthana Blossoms magazine.' },

@@ -17,4 +17,3 @@ LinkedIn: https://www.linkedin.com/in/ovini-wijesooriya
 - Languages: English (fluent), Sinhala (native).
 
 ## Pages
-- [Portfolio home](https://ovini.me/): single-page portfolio with about, awards, journey, education, projects and contact sections.
