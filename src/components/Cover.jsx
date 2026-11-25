@@ -21,7 +21,7 @@ export function CoverArt({ seed, label }) {
   const shape = (h >>> 8) % 3
   const dark = bg === '#0f241e' || bg === '#2e6b4e'
   return (
-    <svg className="cover-art" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label={`Cover for ${label}`}>
+    <svg className="cover-art" viewBox="0 0 400 300" preserveAspectRatio="xMinYMin slice" role="img" aria-label={`Cover for ${label}`}>
       <rect width="400" height="300" fill={bg} />
       {shape === 0 && (
         <>

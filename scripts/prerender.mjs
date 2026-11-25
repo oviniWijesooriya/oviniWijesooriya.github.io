@@ -111,7 +111,10 @@ for (const [kind, item] of pages) {
   write(meta.path, render(meta, fallbacks[kind](item)))
 }
 write('/404.html', render(pageMeta('404'), fallbacks.notfound()))
-write('/admin/', render(pageMeta('admin'), wrap('<h1>Site admin</h1><p>This page needs JavaScript.</p>')))
+write(
+  '/admin/',
+  render(pageMeta('admin'), wrap('<h1>Site admin</h1><p>This page needs JavaScript.</p>')).replace(/<!--PRELOADER(-CSS)?:START-->[\s\S]*?<!--PRELOADER(-CSS)?:END-->/g, ''),
+)
 
 // ---- sitemap ----
 const lastmod = (d) => (/^\d{4}-\d{2}-\d{2}$/.test(d) ? d : new Date().toISOString().slice(0, 10))

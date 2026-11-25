@@ -5,3 +5,5 @@ dist
 .vercel
 # photos copied from Google Drive at build time
 src/content/events/**/drive-*
+# staging copies of photos uploaded to Google Drive
+_drive-upload/

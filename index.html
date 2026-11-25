@@ -17,6 +17,24 @@
     <link rel="canonical" href="https://ovini.me/" />
     <!--SEO:END-->
 
+    <!--PRELOADER-CSS:START-->
+    <style>
+      #preloader { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; background: #0f241e; color: #f1f3ea;
+        font-family: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif; transition: clip-path 0.8s cubic-bezier(0.76, 0, 0.24, 1); clip-path: inset(0 0 0 0);
+        /* safety net: if scripts never run, the page is uncovered anyway */ animation: preloader-timeout 0s 7s forwards; }
+      #preloader.is-done { clip-path: inset(0 0 100% 0); pointer-events: none; }
+      #preloader .mark { font-size: clamp(48px, 9vw, 96px); font-weight: 750; letter-spacing: -0.05em; line-height: 1; animation: preloader-rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+      #preloader .mark b { color: #e5a912; }
+      #preloader .bar { width: 160px; height: 3px; overflow: hidden; border-radius: 3px; background: rgba(241, 243, 234, 0.16); }
+      #preloader .bar i { display: block; height: 100%; background: #e5a912; transform-origin: left; animation: preloader-fill 1.4s cubic-bezier(0.6, 0, 0.2, 1) both; }
+      #preloader.is-done .mark, #preloader.is-done .bar { opacity: 0; transition: opacity 0.25s; }
+      @keyframes preloader-rise { from { opacity: 0; transform: translateY(24px); } }
+      @keyframes preloader-fill { from { transform: scaleX(0); } }
+      @keyframes preloader-timeout { to { visibility: hidden; } }
+      @media (prefers-reduced-motion: reduce) { #preloader, #preloader * { animation-duration: 0s !important; transition: none !important; } #preloader { animation: preloader-timeout 0s 7s forwards; } }
+    </style>
+    <noscript><style>#preloader { display: none; }</style></noscript>
+    <!--PRELOADER-CSS:END-->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -25,6 +43,12 @@
     />
   </head>
   <body>
+    <!--PRELOADER:START-->
+    <div id="preloader" aria-hidden="true">
+      <span class="mark">Ovini<b>.</b></span>
+      <span class="bar"><i></i></span>
+    </div>
+    <!--PRELOADER:END-->
     <div id="root">
       <!--FALLBACK:START-->
       <main style="font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:2rem">

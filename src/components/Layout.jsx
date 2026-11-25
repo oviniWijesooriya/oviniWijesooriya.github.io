@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import site, { contact } from '../data'
+import { scrollToTop, useReveal, useScrollVars, useSmoothScroll } from '../lib/motion'
+import BackToTop from './BackToTop'
 
 const links = [
   { to: '/', label: 'Home', end: true },
@@ -93,9 +95,13 @@ export default function Layout() {
   const main = useRef(null)
   const first = useRef(true)
 
+  useSmoothScroll()
+  useScrollVars()
+  useReveal(pathname)
+
   // New page: back to the top, and move focus to the content for keyboard and screen-reader users.
   useEffect(() => {
-    window.scrollTo(0, 0)
+    scrollToTop({ immediate: true })
     if (first.current) {
       first.current = false
       return
@@ -105,11 +111,13 @@ export default function Layout() {
 
   return (
     <>
+      <div className="scroll-progress" aria-hidden="true" />
       <Header />
       <main id="main" ref={main} tabIndex={-1} className="page" key={pathname}>
         <Outlet />
       </main>
       <Footer />
+      <BackToTop />
     </>
   )
 }

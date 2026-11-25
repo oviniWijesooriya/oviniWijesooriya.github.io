@@ -7,6 +7,7 @@ export default function About() {
   return (
     <>
       <header className="container page-head page-head-split">
+        <span className="hero-orb" aria-hidden="true" />
         <div>
           <h1 className="page-title">About</h1>
           <p className="page-lede">{site.about.lede}</p>

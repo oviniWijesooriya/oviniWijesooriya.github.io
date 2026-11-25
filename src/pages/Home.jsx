@@ -15,6 +15,8 @@ export default function Home() {
   return (
     <>
       <section className="hero container">
+        <span className="hero-orb" aria-hidden="true" />
+        <span className="hero-ring" aria-hidden="true" />
         <div className="hero-copy">
           <p className="hero-kicker">{home.kicker}</p>
           <h1 className="hero-name" aria-label="Ovini Wijesooriya">
@@ -41,9 +43,13 @@ export default function Home() {
             <span className="tag-foot">{home.tag.foot}</span>
           </figcaption>
         </figure>
+        <a className="scroll-cue" href="#now">
+          <span aria-hidden="true" />
+          Scroll
+        </a>
       </section>
 
-      <section className="container now" aria-labelledby="now-h">
+      <section id="now" className="container now" aria-labelledby="now-h">
         <h2 id="now-h" className="section-title">
           Where things stand
         </h2>

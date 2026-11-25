@@ -26,6 +26,7 @@ export default function Lightbox({ photos, index, title, onClose, onChange }) {
     <dialog
       ref={ref}
       className="lightbox"
+      data-lenis-prevent
       aria-label={`${title} photo viewer`}
       onClose={onClose}
       onKeyDown={onKey}

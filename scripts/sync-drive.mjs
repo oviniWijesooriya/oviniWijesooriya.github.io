@@ -135,7 +135,7 @@ async function main() {
   if (!results.length) console.log('Drive sync: no event folders with photos yet.')
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     console.error(`Drive sync failed: ${error.message}`)
     // In CI, stop the deploy so the live site keeps its current photos. Locally, carry on with what is on disk.
