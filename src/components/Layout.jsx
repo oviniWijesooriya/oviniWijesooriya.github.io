@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { contact } from '../data'
+import site, { contact } from '../data'
 
 const links = [
   { to: '/', label: 'Home', end: true },
@@ -47,7 +47,7 @@ function Footer() {
     <footer className="site-footer">
       <div className="container footer-grid">
         <div className="footer-pitch">
-          <h2>Want to talk food science, research or events?</h2>
+          <h2>{site.footer.pitch}</h2>
           <a className="footer-mail" href={`mailto:${contact.email}`}>
             {contact.email}
           </a>

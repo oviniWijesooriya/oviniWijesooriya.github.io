@@ -1,4 +1,4 @@
-import { certifications, education, journey, languages, projects, researchTitle, skills } from '../data'
+import site, { certifications, education, journey, languages, projects, researchTitle, skills } from '../data'
 import { pageMeta } from '../lib/seo-data'
 import { useSeo } from '../lib/useSeo'
 
@@ -9,13 +9,8 @@ export default function About() {
       <header className="container page-head page-head-split">
         <div>
           <h1 className="page-title">About</h1>
-          <p className="page-lede">
-            I'm an ambitious, enthusiastic person who thrives in dynamic, challenging environments. I adapt fast, love to learn, and stay calm under pressure.
-          </p>
-          <p className="page-body">
-            From food-quality labs to conference stages, I bring strong communication and leadership to every team I join, whether I'm presenting research,
-            running events with AIESEC, or writing for a media society.
-          </p>
+          <p className="page-lede">{site.about.lede}</p>
+          <p className="page-body">{site.about.body}</p>
         </div>
         <img className="about-photo" src="/ovini.jpg" alt="Ovini Wijesooriya" width="800" height="1000" />
       </header>

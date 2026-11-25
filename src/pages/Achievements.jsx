@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { extras, faurs, wins } from '../data'
+import site, { extras, faurs, wins } from '../data'
+import { getPost } from '../lib/content'
 import { pageMeta } from '../lib/seo-data'
 import { useSeo } from '../lib/useSeo'
 
@@ -23,9 +24,9 @@ export default function Achievements() {
           </div>
           <div>
             <h2 id="spot-h" className="gold-title">
-              Alfred Baur Gold Medal, FAuRS 2026
+              {site.spotlight.goldTitle}
             </h2>
-            <p className="gold-sub">Most Outstanding Emerging Researcher. Sponsored by Baurs Advisory at the Faculty of Agriculture Undergraduate Research Symposium, University of Peradeniya.</p>
+            <p className="gold-sub">{site.spotlight.goldSub}</p>
             <ul className="gold-others">
               {faurs.map((f) => (
                 <li key={f.title}>
@@ -34,9 +35,11 @@ export default function Achievements() {
                 </li>
               ))}
             </ul>
-            <Link className="text-link" to="/blog/alfred-baur-gold-medal-faurs-2026/">
-              Read the full story
-            </Link>
+            {getPost('alfred-baur-gold-medal-faurs-2026') && (
+              <Link className="text-link" to="/blog/alfred-baur-gold-medal-faurs-2026/">
+                Read the full story
+              </Link>
+            )}
           </div>
         </article>
       </section>

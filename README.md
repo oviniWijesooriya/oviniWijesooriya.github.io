@@ -12,6 +12,22 @@ Built with **React + Vite + React Router**. Every page is also prerendered to it
 | Journal (blog) | `/blog/` and `/blog/<post>/` |
 | Gallery | `/gallery/` and `/gallery/<event>/` |
 
+## Admin dashboard (`/admin/`)
+
+Open `https://ovini.me/admin/` to manage content without touching code: write, edit, draft and delete posts; add event galleries and upload photos; edit the home, about, achievements, experience and contact text; replace the portrait.
+
+There is no server. The dashboard talks to the GitHub API from your browser, and every save is a commit to this repository, which redeploys the site in a few minutes.
+
+**Sign in** with a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) created by the repository owner:
+
+1. Repository access: only this repository.
+2. Permissions: **Contents: Read and write** (nothing else).
+3. Set an expiry date.
+
+Security notes: the page itself is public (it is hidden from search engines) but can do nothing without a token. The token is kept in your browser, for the tab only unless you tick "Stay signed in". Treat it like a password, and delete it on GitHub if it ever leaks.
+
+After editing in the dashboard, run `git pull` before changing files on your computer.
+
 ## Run locally
 
 ```bash
@@ -40,6 +56,7 @@ Write the post in Markdown. Use `##` for headings, `-` for lists, `**bold**`, an
 - `category` creates a filter button automatically (use the same spelling to group posts).
 - `event` is optional. Use the event's folder name to link the post to that event's gallery.
 - `order` is optional and breaks ties between posts with the same date (higher first).
+- `draft: true` keeps a post (or event) off the website.
 
 ## Add an event gallery
 
@@ -66,7 +83,7 @@ Write the post in Markdown. Use `##` for headings, `-` for lists, `**bold**`, an
 
 ## Other content
 
-Awards, experience, education, projects and contact details live in `src/data.js`. The portrait is `public/ovini.jpg`.
+Home and about text, awards, experience, education, projects and contact details live in `src/content/site.json`. The portrait is `public/ovini.jpg`. The forms in the dashboard are described in `src/admin/schema.js`. Search-engine profile data is in `src/lib/seo-data.js`.
 
 ## SEO
 

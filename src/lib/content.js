@@ -11,7 +11,8 @@ const eventSlugOf = (path) => path.split('/').slice(-2)[0]
 export const renderMarkdown = (md) => marked.parse(md)
 
 export const posts = Object.entries(postFiles)
-  .map(([path, raw]) => ({ ...toBlogPost(slugOf(path), raw) }))
+  .map(([path, raw]) => toBlogPost(slugOf(path), raw))
+  .filter((p) => !p.draft)
   .sort(byNewest)
 
 const photosBySlug = {}
@@ -29,6 +30,7 @@ export const events = Object.entries(eventFiles)
     const cover = (event.cover && photos.find((p) => p.name === event.cover)?.src) || photos[0]?.src || ''
     return { ...event, photos, cover }
   })
+  .filter((e) => !e.draft)
   .sort(byNewest)
 
 export const getPost = (slug) => posts.find((p) => p.slug === slug)

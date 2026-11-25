@@ -133,6 +133,8 @@ export function pageMeta(kind, item = {}) {
         ),
       }
     }
+    case 'admin':
+      return { title: 'Site admin | Ovini Wijesooriya', description: 'Private content editor.', path: '/admin/', ogType: 'website', noindex: true, jsonLd: null }
     default:
       return {
         title: 'Page not found | Ovini Wijesooriya',

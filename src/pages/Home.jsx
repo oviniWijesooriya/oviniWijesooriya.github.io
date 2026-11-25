@@ -1,34 +1,26 @@
 import { Link } from 'react-router-dom'
 import { PostRow, EventCard } from '../components/Cards'
-import { faurs } from '../data'
+import site, { faurs } from '../data'
 import { events, getEvent, posts } from '../lib/content'
 import { pageMeta } from '../lib/seo-data'
 import { useSeo } from '../lib/useSeo'
 
-const now = [
-  { k: 'Studying', v: 'BSc (Hons) in Food Science & Technology, final year, University of Peradeniya' },
-  { k: 'Researching', v: 'An ADDIE-based mobile health platform for dietary behaviour and cardiometabolic health' },
-  { k: 'Building', v: 'MealBridge.lk, a real-time food redistribution platform', href: 'https://mealbridge.lk' },
-  { k: 'Leading', v: 'Local Committee Vice President at AIESEC in Sri Lanka and Secretary of the Indeewari Sub-Committee' },
-]
-
 export default function Home() {
   useSeo(pageMeta('home'))
   const latest = posts.slice(0, 3)
-  const rail = events.slice(0, 5)
+  const rail = events.slice(0, 8)
+  const { home, spotlight } = site
 
   return (
     <>
       <section className="hero container">
         <div className="hero-copy">
-          <p className="hero-kicker">Food Science &amp; Technology, University of Peradeniya</p>
+          <p className="hero-kicker">{home.kicker}</p>
           <h1 className="hero-name" aria-label="Ovini Wijesooriya">
             <span aria-hidden="true">Ovini</span>
             <span aria-hidden="true">Wijesooriya</span>
           </h1>
-          <p className="hero-lede">
-            I build tools that help people eat well and waste less, and I lead and speak wherever the work needs a team or a stage.
-          </p>
+          <p className="hero-lede">{home.lede}</p>
           <div className="hero-actions">
             <Link className="btn btn-dark" to="/blog/">
               Read the journal
@@ -43,9 +35,9 @@ export default function Home() {
           <img className="hero-photo" src="/ovini.jpg" alt="Portrait of Ovini Wijesooriya in a navy suit" width="800" height="1000" fetchPriority="high" />
           <figcaption className="specimen-tag">
             <span className="tag-hole" aria-hidden="true" />
-            <strong>Alfred Baur Gold Medal</strong>
-            <span>Most Outstanding Emerging Researcher</span>
-            <span className="tag-foot">FAuRS 2026, University of Peradeniya</span>
+            <strong>{home.tag.title}</strong>
+            <span>{home.tag.sub}</span>
+            <span className="tag-foot">{home.tag.foot}</span>
           </figcaption>
         </figure>
       </section>
@@ -55,7 +47,7 @@ export default function Home() {
           Where things stand
         </h2>
         <dl className="now-list">
-          {now.map((r) => (
+          {home.now.map((r) => (
             <div key={r.k} className="now-row">
               <dt>{r.k}</dt>
               <dd>
@@ -92,9 +84,9 @@ export default function Home() {
         <div className="container award-grid">
           <div>
             <h2 id="awards-h" className="section-title on-dark">
-              Four awards at one symposium
+              {spotlight.bandTitle}
             </h2>
-            <p className="award-lede">FAuRS 2026 at the University of Peradeniya, led by the Alfred Baur Gold Medal for the Most Outstanding Emerging Researcher.</p>
+            <p className="award-lede">{spotlight.bandLede}</p>
             <Link className="btn btn-gold" to="/achievements/">
               All achievements
             </Link>

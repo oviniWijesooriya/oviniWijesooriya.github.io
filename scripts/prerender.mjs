@@ -8,11 +8,11 @@ import { fileURLToPath } from 'node:url'
 import { marked } from 'marked'
 import { byNewest, formatDate, toBlogPost, toEvent } from '../src/lib/frontmatter.js'
 import { DEFAULT_IMAGE, SITE, pageMeta } from '../src/lib/seo-data.js'
-import { education, faurs, journey, projects, wins } from '../src/data.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(root, 'dist')
 const template = readFileSync(join(dist, 'index.html'), 'utf8')
+const { education, faurs, journey, projects, wins } = JSON.parse(readFileSync(join(root, 'src/content/site.json'), 'utf8'))
 
 const esc = (s = '') => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
@@ -20,11 +20,13 @@ const esc = (s = '') => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').r
 const posts = readdirSync(join(root, 'src/content/posts'))
   .filter((f) => f.endsWith('.md'))
   .map((f) => toBlogPost(f.replace(/\.md$/, ''), readFileSync(join(root, 'src/content/posts', f), 'utf8')))
+  .filter((p) => !p.draft)
   .sort(byNewest)
 
 const events = readdirSync(join(root, 'src/content/events'), { withFileTypes: true })
   .filter((d) => d.isDirectory() && existsSync(join(root, 'src/content/events', d.name, 'index.md')))
   .map((d) => toEvent(d.name, readFileSync(join(root, 'src/content/events', d.name, 'index.md'), 'utf8')))
+  .filter((e) => !e.draft)
   .sort(byNewest)
 
 // ---- head ----
@@ -109,6 +111,7 @@ for (const [kind, item] of pages) {
   write(meta.path, render(meta, fallbacks[kind](item)))
 }
 write('/404.html', render(pageMeta('404'), fallbacks.notfound()))
+write('/admin/', render(pageMeta('admin'), wrap('<h1>Site admin</h1><p>This page needs JavaScript.</p>')))
 
 // ---- sitemap ----
 const lastmod = (d) => (/^\d{4}-\d{2}-\d{2}$/.test(d) ? d : new Date().toISOString().slice(0, 10))
