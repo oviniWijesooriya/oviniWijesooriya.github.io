@@ -9,6 +9,7 @@ const strings = (key, label) => ({ key, label, type: 'strings' })
 const objects = (key, label, fields) => ({ key, label, type: 'objects', fields })
 
 const heading = text('heading', 'Heading')
+const focus = select('focus', 'Part of the photo to keep in view', [['', 'Middle'], ['top', 'Top'], ['lower', 'Lower']])
 const link = [text('linkLabel', 'Link text'), text('linkHref', 'Link address')]
 const buttonStyles = [
   ['dark', 'Dark'],
@@ -44,9 +45,9 @@ export const SECTION_TYPES = {
   photoStrip: { icon: 'photos', about: 'A strip of photos from one event.', label: 'Photos from one event', fields: [heading, { key: 'event', label: 'Event', type: 'event' }, text('count', 'How many photos')] },
   postList: { icon: 'post', about: 'Every journal post, with category filters.', label: 'All journal posts', fields: [heading] },
   eventGrid: { icon: 'image', about: 'Every event gallery, with category filters.', label: 'All event galleries', fields: [heading] },
-  awardsBand: { icon: 'star', about: 'A card that moves to the next award by itself and as the visitor scrolls.', label: 'Awards slider', fields: [heading, area('text', 'Text'), ...link, objects('items', 'Awards', [text('tag', 'Short rank, e.g. 1st'), text('title', 'Award'), area('sub', 'Details'), photo('photo', 'Photo'), select('focus', 'Part of the photo to keep in view', [['', 'Middle'], ['top', 'Top'], ['lower', 'Lower']])])] },
-  featuredAward: { icon: 'star', about: 'One headline award with the others listed under it.', label: 'Featured award', fields: [heading, area('text', 'Description'), objects('items', 'Other awards', [text('title', 'Award'), area('sub', 'Details')]), ...link] },
-  awardYears: { icon: 'star', about: 'Awards grouped by year.', label: 'Awards by year', fields: [heading, objects('groups', 'Years', [text('label', 'Year or group name'), objects('items', 'Awards', [text('badge', 'Badge'), text('title', 'Award'), text('org', 'Event or organiser')])])] },
+  awardsBand: { icon: 'star', about: 'A card that moves to the next award by itself and as the visitor scrolls.', label: 'Awards slider', fields: [heading, area('text', 'Text'), ...link, objects('items', 'Awards', [text('tag', 'Short rank, e.g. 1st'), text('title', 'Award'), area('sub', 'Details'), photo('photo', 'Photo'), focus])] },
+  featuredAward: { icon: 'star', about: 'One headline award with its photo, and the others along the bottom.', label: 'Featured award', fields: [heading, area('text', 'Description'), photo('photo', 'Photo'), focus, text('seal', 'Words round the medal (keep it short)'), objects('items', 'Other awards', [text('title', 'Award'), area('sub', 'Details')]), ...link] },
+  awardYears: { icon: 'star', about: 'A bar of years that moves on as the visitor scrolls, with that year\u2019s award cards.', label: 'Awards by year', fields: [heading, objects('groups', 'Years (left to right on the bar)', [text('label', 'Year or group name'), objects('items', 'Awards', [text('badge', 'Badge'), text('title', 'Award'), text('org', 'Event or organiser'), photo('photo', 'Photo (optional)'), focus])])] },
   projects: { icon: 'cards', about: 'Large project blocks with links.', label: 'Projects', fields: [heading, objects('items', 'Projects', [text('title', 'Title'), text('tag', 'Short label'), area('text', 'Description'), text('href', 'Link (optional)'), text('badge', 'Badge (optional)')]), area('note', 'Note under the projects')] },
   experience: { icon: 'briefcase', about: 'Roles and organisations, in groups.', label: 'Experience', fields: [heading, objects('groups', 'Groups', [text('label', 'Group name'), objects('items', 'Roles', [text('role', 'Role'), text('org', 'Organisation'), text('when', 'When')])])] },
   timeline: { icon: 'clock', about: 'A dated line, used for education.', label: 'Timeline (education)', fields: [heading, objects('items', 'Entries', [text('when', 'When'), text('title', 'Title'), text('place', 'Place'), bool('current', 'Current')])] },

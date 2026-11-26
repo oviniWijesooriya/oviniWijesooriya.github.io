@@ -5,11 +5,13 @@ import { events, getEvent, getPost, posts } from '../lib/content'
 import site from '../data'
 import AwardSlider from './AwardSlider'
 import { EventCard, PostRow } from './Cards'
+import FeaturedAward from './FeaturedAward'
 import Lightbox from './Lightbox'
 import Prose from './Prose'
 import Rail from './Rail'
 import ScrollRow from './ScrollRow'
 import SmartLink from './SmartLink'
+import YearLine from './YearLine'
 
 const list = (value) => value || []
 const count = (value, fallback) => Math.max(1, parseInt(value, 10) || fallback)
@@ -278,61 +280,7 @@ function Skills({ s }) {
   )
 }
 
-function FeaturedAward({ s }) {
-  return (
-    <section id={s.id} className="container block-tight" aria-labelledby={s.heading ? `${s.id}-h` : undefined}>
-      <article className="gold-feature">
-        <div className="gold-medal" aria-hidden="true">
-          <svg viewBox="0 0 120 120" width="120" height="120">
-            <circle cx="60" cy="60" r="54" fill="#e5a912" />
-            <circle cx="60" cy="60" r="42" fill="none" stroke="#0f241e" strokeWidth="2" strokeDasharray="3 5" />
-            <path d="M60 30l8.8 18 19.8 2.9-14.3 14 3.4 19.7L60 75.2 42.3 84.6l3.4-19.7-14.3-14L51.2 48z" fill="#0f241e" />
-          </svg>
-        </div>
-        <div>
-          <h2 id={`${s.id}-h`} className="gold-title">
-            {s.heading}
-          </h2>
-          <p className="gold-sub">{s.text}</p>
-          <ul className="gold-others">
-            {list(s.items).map((f, i) => (
-              <li key={i}>
-                <strong>{f.title}</strong>
-                <span>{f.sub}</span>
-              </li>
-            ))}
-          </ul>
-          {!deadPost(s.linkHref) && textLink(s.linkHref, s.linkLabel)}
-        </div>
-      </article>
-    </section>
-  )
-}
-
-function AwardYears({ s }) {
-  return (
-    <Block s={s}>
-      <div className="years">
-        {list(s.groups).map((y, i) => (
-          <section key={i} className="year" aria-label={y.label}>
-            <h3 className="year-label">{y.label}</h3>
-            <ul className="win-list">
-              {list(y.items).map((w, j) => (
-                <li key={j} className="win-item">
-                  <span className="tag-chip">{w.badge}</span>
-                  <div>
-                    <h4>{w.title}</h4>
-                    <p>{w.org}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-    </Block>
-  )
-}
+const Featured = ({ s }) => <FeaturedAward s={s} link={deadPost(s.linkHref) ? '' : s.linkHref} />
 
 function List({ s }) {
   return (
@@ -422,8 +370,8 @@ const TYPES = {
   experience: Experience,
   timeline: Timeline,
   skills: Skills,
-  featuredAward: FeaturedAward,
-  awardYears: AwardYears,
+  featuredAward: Featured,
+  awardYears: YearLine,
   list: List,
   text: Text,
   cards: Cards,

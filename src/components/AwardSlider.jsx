@@ -2,12 +2,11 @@
 // while the visitor scrolls, and each stretch of scrolling moves it on one award (back when scrolling
 // up). Very short screens just list the awards (see CSS).
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { findPhoto } from '../lib/content'
+import { FOCUS, findPhoto } from '../lib/content'
 import { PlayPause } from './Rail'
 import SmartLink from './SmartLink'
 
 const TURN = 5000 // milliseconds an award stays up when nobody is scrolling
-const FOCUS = { top: '50% 15%', lower: '50% 70%' }
 
 const mod = (n, m) => ((n % m) + m) % m
 

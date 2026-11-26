@@ -58,6 +58,9 @@ export const getPost = (slug) => posts.find((p) => p.slug === slug)
 export const getEvent = (slug) => events.find((e) => e.slug === slug)
 export const postsForEvent = (slug) => posts.filter((p) => p.event === slug)
 
+/** CSS object-position for the "part of the photo to keep in view" setting. */
+export const FOCUS = { top: '50% 15%', lower: '50% 70%' }
+
 /** A photo picked inside a page section, written as `<event>/<photo>`. */
 export function findPhoto(ref = '') {
   const [slug, key] = ref.split('/')

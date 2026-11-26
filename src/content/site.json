@@ -397,6 +397,9 @@
           "visible": true,
           "heading": "Alfred Baur Gold Medal, FAuRS 2026",
           "text": "Most Outstanding Emerging Researcher. Sponsored by Baurs Advisory at the Faculty of Agriculture Undergraduate Research Symposium, University of Peradeniya.",
+          "photo": "faurs-2026/drive:28_gzx",
+          "focus": "lower",
+          "seal": "Most Outstanding Emerging Researcher",
           "items": [
             {
               "title": "Best Presenter",
@@ -426,22 +429,30 @@
                 {
                   "badge": "Gold Medal",
                   "title": "Alfred Baur Gold Medal — Most Outstanding Emerging Researcher",
-                  "org": "FAuRS 2026 · Faculty of Agriculture, University of Peradeniya"
+                  "org": "FAuRS 2026 · Faculty of Agriculture, University of Peradeniya",
+                  "photo": "faurs-2026/drive:TYAriQ",
+                  "focus": ""
                 },
                 {
                   "badge": "Best Presenter",
                   "title": "Best Presenter — Technological Interventions & Applications in Agriculture",
-                  "org": "FAuRS 2026 · Faculty of Agriculture, University of Peradeniya"
+                  "org": "FAuRS 2026 · Faculty of Agriculture, University of Peradeniya",
+                  "photo": "faurs-2026/drive:bRZW_2",
+                  "focus": "lower"
                 },
                 {
                   "badge": "Winner",
                   "title": "Scientific Eye Photography Competition",
-                  "org": "FAuRS 2026 · Photo featured on the cover of Hanthana Blossoms"
+                  "org": "FAuRS 2026 · Photo featured on the cover of Hanthana Blossoms",
+                  "photo": "faurs-2026/drive:fLxJsh",
+                  "focus": "lower"
                 },
                 {
                   "badge": "1st Runner-up",
                   "title": "Research Briefs (Sinhala) Competition",
-                  "org": "FAuRS 2026 · Brief published in Hanthana Blossoms"
+                  "org": "FAuRS 2026 · Brief published in Hanthana Blossoms",
+                  "photo": "faurs-2026/drive:QgS9Kb",
+                  "focus": "lower"
                 }
               ]
             },
@@ -451,12 +462,16 @@
                 {
                   "badge": "2nd Runner-up",
                   "title": "Best Green Innovation",
-                  "org": "Profood Propack AgBiz Exhibition 2025 · Sri Lanka Food Processors Association (SLFPA)"
+                  "org": "Profood Propack AgBiz Exhibition 2025 · Sri Lanka Food Processors Association (SLFPA)",
+                  "photo": "profood-propack-2025/drive:CtJsma",
+                  "focus": ""
                 },
                 {
                   "badge": "International",
                   "title": "Presenter — 24th International Students’ Summit",
-                  "org": "Organised by Tokyo University of Agriculture, Japan · held in Bogor, Indonesia"
+                  "org": "Organised by Tokyo University of Agriculture, Japan · held in Bogor, Indonesia",
+                  "photo": "international-students-summit-2025/drive:ClPnib",
+                  "focus": ""
                 }
               ]
             },

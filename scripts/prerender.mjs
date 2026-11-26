@@ -62,7 +62,7 @@ const postList = () => `<ul>${posts.map((p) => `<li><a href="/blog/${p.slug}/">$
 const eventList = () => `<ul>${events.map((e) => `<li><a href="/gallery/${e.slug}/">${esc(e.title)}</a> (${esc(formatDate(e.date))}): ${esc(e.summary)}</li>`).join('')}</ul>`
 
 // Plain-HTML version of whatever sections a page has, so new sections are readable without JavaScript too.
-const SKIP = new Set(['id', 'type', 'visible', 'href', 'linkHref', 'buttonHref', 'style', 'display', 'count', 'event', 'heading', 'hidePhoto', 'current'])
+const SKIP = new Set(['id', 'type', 'visible', 'href', 'linkHref', 'buttonHref', 'style', 'display', 'count', 'event', 'heading', 'hidePhoto', 'current', 'photo', 'focus', 'seal'])
 function text(value) {
   if (Array.isArray(value)) return value.length ? `<ul>${value.map((v) => `<li>${text(v)}</li>`).join('')}</ul>` : ''
   if (value && typeof value === 'object') return Object.entries(value).filter(([k]) => !SKIP.has(k)).map(([, v]) => text(v)).filter(Boolean).join(' ')
