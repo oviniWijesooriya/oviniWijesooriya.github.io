@@ -4,6 +4,8 @@
 //   PORTFOLIO/                 <- folderId in src/content/drive.json
 //     faurs-2026/              <- one sub-folder per event (folder name or event title)
 //       IMG_001.jpg
+//     journal/
+//       my-post/               <- photos of one journal post (post file name or title)
 //
 // Each photo is saved twice, resized by Drive: 1600px (viewer) and 800px (grids), as
 // src/content/events/<event>/drive-*.jpg and thumbs/drive-*.jpg. These files are git-ignored.
@@ -16,6 +18,7 @@ import { parseFrontmatter } from '../src/lib/frontmatter.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const eventsDir = join(root, 'src/content/events')
+const postsDir = join(root, 'src/content/posts')
 const SIZES = [
   { width: 1600, dir: '' },
   { width: 800, dir: 'thumbs' },
@@ -78,19 +81,50 @@ async function download(file, width) {
   return { ext, bytes: Buffer.from(await res.arrayBuffer()) }
 }
 
-function localEvents() {
-  return readdirSync(eventsDir, { withFileTypes: true })
+/** Everything that can own a Drive folder: `{ kind, slug, title, dir }`. */
+function targets() {
+  const title = (file, fallback) => parseFrontmatter(readFileSync(file, 'utf8')).data.title || fallback
+  const events = readdirSync(eventsDir, { withFileTypes: true })
     .filter((d) => d.isDirectory() && existsSync(join(eventsDir, d.name, 'index.md')))
-    .map((d) => ({ slug: d.name, title: parseFrontmatter(readFileSync(join(eventsDir, d.name, 'index.md'), 'utf8')).data.title || d.name }))
+    .map((d) => ({ kind: 'events', slug: d.name, title: title(join(eventsDir, d.name, 'index.md'), d.name), dir: join(eventsDir, d.name) }))
+  const posts = readdirSync(postsDir)
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => {
+      const slug = f.slice(0, -3)
+      return { kind: 'journal', slug, title: title(join(postsDir, f), slug), dir: join(postsDir, 'photos', slug) }
+    })
+  return [...events, ...posts]
 }
 
 /** Removes photos from earlier syncs so deletions in Drive are mirrored. */
-function clear(slug) {
-  for (const { dir } of SIZES) {
-    const target = join(eventsDir, slug, dir)
-    if (!existsSync(target)) continue
-    for (const name of readdirSync(target)) if (name.startsWith('drive-')) rmSync(join(target, name))
+function clear() {
+  const dirs = [
+    ...readdirSync(eventsDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => join(eventsDir, d.name)),
+    ...(existsSync(join(postsDir, 'photos')) ? readdirSync(join(postsDir, 'photos')).map((n) => join(postsDir, 'photos', n)) : []),
+  ]
+  for (const dir of dirs) {
+    for (const size of SIZES) {
+      const target = join(dir, size.dir)
+      if (!existsSync(target)) continue
+      for (const name of readdirSync(target)) if (name.startsWith('drive-')) rmSync(join(target, name))
+    }
   }
+}
+
+async function fetchPhotos(folderId) {
+  const photos = (await list(folderId)).filter((f) => !f.folder && PHOTO_RE.test(f.name)).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+  const files = []
+  for (let i = 0; i < photos.length; i += 4) {
+    await Promise.all(
+      photos.slice(i, i + 4).map(async (photo) => {
+        const stem = `drive-${slugify(photo.name.replace(PHOTO_RE, '')) || 'photo'}-${photo.id.slice(-6)}`
+        const [full, thumb] = await Promise.all(SIZES.map((s) => download(photo, s.width)))
+        // Both sizes share one name so the app can pair them.
+        files.push({ dir: '', name: `${stem}.${full.ext}`, bytes: full.bytes }, { dir: 'thumbs', name: `${stem}.${full.ext}`, bytes: thumb.bytes })
+      }),
+    )
+  }
+  return { photos, files }
 }
 
 async function main() {
@@ -98,41 +132,36 @@ async function main() {
   const folderId = process.env.DRIVE_FOLDER_ID || (existsSync(configPath) && JSON.parse(readFileSync(configPath, 'utf8')).folderId)
   if (!folderId) return console.log('Drive sync: no folder configured, skipped.')
 
-  const events = localEvents()
-  const folders = (await list(folderId)).filter((f) => f.folder)
+  const all = targets()
+  const top = (await list(folderId)).filter((f) => f.folder)
+  const folders = top.filter((f) => f.name !== 'journal').map((f) => ({ ...f, kind: 'events' }))
+  const journal = top.find((f) => f.name === 'journal')
+  if (journal) folders.push(...(await list(journal.id)).filter((f) => f.folder).map((f) => ({ ...f, kind: 'journal' })))
 
   // Download everything first, so a failure part-way leaves the previous photos untouched.
   const results = []
   for (const folder of folders) {
-    const event = events.find((e) => e.slug === slugify(folder.name) || slugify(e.title) === slugify(folder.name))
-    if (!event) {
-      console.warn(`Drive sync: no event matches the folder "${folder.name}". Event folders: ${events.map((e) => e.slug).join(', ')}`)
+    const target = all.find((t) => t.kind === folder.kind && (t.slug === slugify(folder.name) || slugify(t.title) === slugify(folder.name)))
+    if (!target) {
+      console.warn(`Drive sync: nothing on the site matches the ${folder.kind} folder "${folder.name}".`)
       continue
     }
-    const photos = (await list(folder.id)).filter((f) => !f.folder && PHOTO_RE.test(f.name)).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
-    const files = []
-    for (let i = 0; i < photos.length; i += 4) {
-      await Promise.all(
-        photos.slice(i, i + 4).map(async (photo) => {
-          const stem = `drive-${slugify(photo.name.replace(PHOTO_RE, '')) || 'photo'}-${photo.id.slice(-6)}`
-          const [full, thumb] = await Promise.all(SIZES.map((s) => download(photo, s.width)))
-          // Both sizes share one name so the app can pair them.
-          files.push({ dir: '', name: `${stem}.${full.ext}`, bytes: full.bytes }, { dir: 'thumbs', name: `${stem}.${full.ext}`, bytes: thumb.bytes })
-        }),
-      )
-    }
-    results.push({ slug: event.slug, count: photos.length, files })
+    results.push({ target, ...(await fetchPhotos(folder.id)) })
   }
 
-  events.forEach((e) => clear(e.slug))
-  for (const { slug, count, files } of results) {
+  clear()
+  // The dashboard reads this list to show photos before Drive is connected to it.
+  const manifest = { events: {}, journal: {} }
+  for (const { target, photos, files } of results) {
     for (const file of files) {
-      mkdirSync(join(eventsDir, slug, file.dir), { recursive: true })
-      writeFileSync(join(eventsDir, slug, file.dir, file.name), file.bytes)
+      mkdirSync(join(target.dir, file.dir), { recursive: true })
+      writeFileSync(join(target.dir, file.dir, file.name), file.bytes)
     }
-    console.log(`Drive sync: ${slug}: ${count} photo(s)`)
+    manifest[target.kind][target.slug] = photos.map(({ id, name }) => ({ id, name }))
+    console.log(`Drive sync: ${target.kind}/${target.slug}: ${photos.length} photo(s)`)
   }
-  if (!results.length) console.log('Drive sync: no event folders with photos yet.')
+  writeFileSync(join(root, 'public/drive-manifest.json'), JSON.stringify(manifest))
+  if (!results.length) console.log('Drive sync: no folders with photos yet.')
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

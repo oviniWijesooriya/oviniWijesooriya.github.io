@@ -1,38 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { byNewest, formatDate } from '../lib/frontmatter'
+import { manifestList } from './drive'
+import DrivePhotos from './DrivePhotos'
 import { ConfirmButton, MarkdownEditor } from './Editor'
-import { resizeImage, slugify, toMarkdownFile } from './files'
+import { slugify, toMarkdownFile } from './files'
 
 const DATE_PATTERN = '\\d{4}(-\\d{2}(-\\d{2})?)?'
 
-const filesOf = (photo) => [photo.path, photo.thumbPath].filter(Boolean).map((path) => ({ path, delete: true }))
-
-/** Thumbnail of a photo already in the repository (it may not be deployed yet, so read it from GitHub). */
-function RepoPhoto({ client, photo }) {
-  const [url, setUrl] = useState('')
-  useEffect(() => {
-    let alive = true
-    let made = ''
-    client
-      .bytes(photo.sha)
-      .then((bytes) => {
-        if (!alive) return
-        made = URL.createObjectURL(new Blob([bytes]))
-        setUrl(made)
-      })
-      .catch(() => {})
-    return () => {
-      alive = false
-      if (made) URL.revokeObjectURL(made)
-    }
-  }, [client, photo.sha])
-  return url ? <img src={url} alt={photo.name} /> : <div className="a-thumb-wait">Loading</div>
-}
-
-function EventForm({ event, events, client, busy, save, close, fail }) {
+function EventForm({ event, events, busy, save, close, open, photoProps }) {
   const [form, setForm] = useState(() => ({
     title: event?.data.title || '',
-    date: event?.data.date || String(new Date().getFullYear()),
+    date: event ? event.data.date || '' : String(new Date().getFullYear()),
     place: event?.data.place || '',
     host: event?.data.host || '',
     category: event?.data.category || '',
@@ -41,31 +19,9 @@ function EventForm({ event, events, client, busy, save, close, fail }) {
     draft: event?.data.draft === 'true',
     body: event?.body || '',
   }))
-  const [removed, setRemoved] = useState([])
-  const [added, setAdded] = useState([])
-  const [reading, setReading] = useState(false)
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
   const categories = [...new Set(events.map((e) => e.data.category).filter(Boolean))]
-  const photos = event?.photos || []
-
-  const addFiles = async (e) => {
-    const input = e.target
-    const files = [...input.files]
-    if (!files.length) return
-    setReading(true)
-    try {
-      for (const file of files) {
-        const resized = await resizeImage(file)
-        const thumb = await resizeImage(file, 800, 0.8)
-        setAdded((list) => [...list, { ...resized, thumb: thumb.base64, label: file.name, key: `${file.name}-${list.length}` }])
-      }
-    } catch (error) {
-      fail(error.message)
-    } finally {
-      setReading(false)
-      input.value = ''
-    }
-  }
+  const { drive, fail } = photoProps
 
   const submit = async (e) => {
     e.preventDefault()
@@ -73,33 +29,24 @@ function EventForm({ event, events, client, busy, save, close, fail }) {
     if (!slug) {
       const root = slugify(form.title) || 'event'
       slug = root
-      for (let n = 2; events.some((ev) => ev.slug === slug); n++) slug = `${root}-${n}`
+      // "journal" is the Drive folder that holds post photos.
+      for (let n = 2; events.some((ev) => ev.slug === slug) || slug === 'journal'; n++) slug = `${root}-${n}`
     }
-    const dir = `src/content/events/${slug}`
-    // New photos are numbered after the highest existing number so they keep their order.
-    let next = Math.max(0, ...photos.map((p) => parseInt(p.name, 10) || 0))
-    const uploads = added.flatMap((a) => {
-      const name = `${String(++next).padStart(3, '0')}.jpg`
-      return [
-        { path: `${dir}/${name}`, base64: a.base64 },
-        { path: `${dir}/thumbs/${name}`, base64: a.thumb },
-      ]
-    })
-    const deletions = photos.filter((p) => removed.includes(p.name)).flatMap((p) => filesOf(p))
     const { body, ...meta } = form
-    if (removed.includes(meta.cover)) meta.cover = ''
-    const index = `${dir}/index.md`
-    const ok = await save(
-      `${event ? 'Update' : 'Add'} event: ${form.title}`,
-      [{ path: index, text: toMarkdownFile({ ...event?.data, ...meta }, body) }, ...uploads, ...deletions],
-      { [index]: event?.sha },
-    )
-    if (ok) close()
+    const index = `src/content/events/${slug}/index.md`
+    const ok = await save(`${event ? 'Update' : 'Add'} event: ${form.title}`, [{ path: index, text: toMarkdownFile({ ...event?.data, ...meta }, body) }], { [index]: event?.sha })
+    if (!ok) return
+    if (event) return close()
+    // A new event gets its Drive folder, and stays open so photos can be added straight away.
+    if (drive) await drive.ensure(slug).catch((error) => fail(error.message))
+    open(slug)
   }
 
   const remove = async () => {
-    const changes = [{ path: event.path, delete: true }, ...photos.flatMap((p) => filesOf(p))]
-    if (await save(`Delete event: ${event.data.title}`, changes, { [event.path]: event.sha })) close()
+    const changes = event.files.map((path) => ({ path, delete: true }))
+    if (!(await save(`Delete event: ${event.data.title}`, changes, { [event.path]: event.sha }))) return
+    if (drive) await drive.trashFolder(event.slug).catch((error) => fail(error.message))
+    close()
   }
 
   return (
@@ -117,7 +64,7 @@ function EventForm({ event, events, client, busy, save, close, fail }) {
       <div className="a-columns">
         <label className="a-field">
           <span>Date (2026, 2026-11 or 2026-11-26)</span>
-          <input required pattern={DATE_PATTERN} value={form.date} onChange={set('date')} />
+          <input pattern={DATE_PATTERN} value={form.date} onChange={set('date')} />
         </label>
         <label className="a-field">
           <span>Category</span>
@@ -142,52 +89,22 @@ function EventForm({ event, events, client, busy, save, close, fail }) {
         <textarea required rows={2} value={form.summary} onChange={set('summary')} />
       </label>
 
-      <fieldset className="a-list">
-        <legend>Photos</legend>
-        <p className="a-hint">
-          Photos are resized and stripped of location data before upload. Photos kept in Google Drive are not listed here. Only add photos you have permission to publish.
-        </p>
-        <ul className="a-photos">
-          {photos.map((p) => {
-            const gone = removed.includes(p.name)
-            return (
-              <li key={p.name} className={gone ? 'is-removed' : ''}>
-                <RepoPhoto client={client} photo={p} />
-                <label className="a-check">
-                  <input type="radio" name="cover" disabled={gone} checked={form.cover === p.name} onChange={() => setForm((f) => ({ ...f, cover: p.name }))} /> Cover
-                </label>
-                <button type="button" className="a-link a-danger-text" onClick={() => setRemoved((r) => (gone ? r.filter((n) => n !== p.name) : [...r, p.name]))}>
-                  {gone ? 'Undo remove' : 'Remove'}
-                </button>
-              </li>
-            )
-          })}
-          {added.map((a) => (
-            <li key={a.key}>
-              <img src={a.url} alt={a.label} />
-              <span className="a-new">New</span>
-              <button type="button" className="a-link a-danger-text" onClick={() => setAdded((list) => list.filter((x) => x.key !== a.key))}>
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
-        <label className="a-field">
-          <span>{reading ? 'Preparing photos…' : 'Add photos'}</span>
-          <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={addFiles} disabled={reading} />
-        </label>
-      </fieldset>
+      {event ? (
+        <DrivePhotos {...photoProps} path={event.slug} cover={form.cover} onCover={(cover) => setForm((f) => ({ ...f, cover }))} />
+      ) : (
+        <p className="a-banner">Save the event first. Its photo folder is then created and you can upload here.</p>
+      )}
 
       <MarkdownEditor label="About this event" rows={8} value={form.body} onChange={(body) => setForm((f) => ({ ...f, body }))} />
       <label className="a-check">
         <input type="checkbox" checked={form.draft} onChange={set('draft')} /> Draft: keep it off the website
       </label>
       <div className="a-actions">
-        <button type="submit" className="a-btn" disabled={busy || reading}>
+        <button type="submit" className="a-btn" disabled={busy}>
           {busy ? 'Saving…' : form.draft ? 'Save draft' : 'Publish'}
         </button>
         {event && (
-          <ConfirmButton disabled={busy} confirmLabel={`Yes, delete event and ${photos.length} ${photos.length === 1 ? 'photo' : 'photos'}`} onConfirm={remove}>
+          <ConfirmButton disabled={busy} confirmLabel={drive ? 'Yes, delete event and move its photos to Drive trash' : 'Yes, delete event'} onConfirm={remove}>
             Delete event
           </ConfirmButton>
         )}
@@ -196,11 +113,22 @@ function EventForm({ event, events, client, busy, save, close, fail }) {
   )
 }
 
-export default function EventsPanel({ events, client, busy, save, fail, editing, setEditing }) {
-  const sorted = [...events].sort((a, b) => byNewest({ date: '', ...a.data }, { date: '', ...b.data }))
+export default function EventsPanel({ events, busy, save, editing, setEditing, photoProps }) {
+  const sorted = [...events].sort((a, b) => byNewest({ ...a.data, date: a.data.date || '' }, { ...b.data, date: b.data.date || '' }))
 
   if (editing !== null) {
-    return <EventForm key={editing} event={events.find((e) => e.slug === editing)} events={events} client={client} busy={busy} save={save} fail={fail} close={() => setEditing(null)} />
+    return (
+      <EventForm
+        key={editing}
+        event={events.find((e) => e.slug === editing)}
+        events={events}
+        busy={busy}
+        save={save}
+        photoProps={photoProps}
+        open={setEditing}
+        close={() => setEditing(null)}
+      />
+    )
   }
 
   return (
@@ -212,18 +140,21 @@ export default function EventsPanel({ events, client, busy, save, fail, editing,
         </button>
       </div>
       <ul className="a-rows">
-        {sorted.map((e) => (
-          <li key={e.slug}>
-            <button type="button" onClick={() => setEditing(e.slug)}>
-              <strong>{e.data.title || e.slug}</strong>
-              <span>{formatDate(e.data.date)}</span>
-              <span>
-                {e.photos.length} {e.photos.length === 1 ? 'photo' : 'photos'}
-              </span>
-              {e.data.draft === 'true' && <em>Draft</em>}
-            </button>
-          </li>
-        ))}
+        {sorted.map((e) => {
+          const count = manifestList(photoProps.manifest, e.slug).length
+          return (
+            <li key={e.slug}>
+              <button type="button" onClick={() => setEditing(e.slug)}>
+                <strong>{e.data.title || e.slug}</strong>
+                <span>{formatDate(e.data.date)}</span>
+                <span>
+                  {count} {count === 1 ? 'photo' : 'photos'}
+                </span>
+                {e.data.draft === 'true' && <em>Draft</em>}
+              </button>
+            </li>
+          )
+        })}
       </ul>
     </>
   )

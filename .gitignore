@@ -5,5 +5,7 @@ dist
 .vercel
 # photos copied from Google Drive at build time
 src/content/events/**/drive-*
+src/content/posts/photos/
+public/drive-manifest.json
 # staging copies of photos uploaded to Google Drive
 _drive-upload/

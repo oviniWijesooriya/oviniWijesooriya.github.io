@@ -7,33 +7,47 @@ const imageFiles = import.meta.glob('../content/events/*/*.{jpg,jpeg,JPG,JPEG,pn
 
 const thumbFiles = import.meta.glob('../content/events/*/thumbs/*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,avif}', { eager: true, query: '?url', import: 'default' })
 
+const postImageFiles = import.meta.glob('../content/posts/photos/*/*.{jpg,jpeg,png,webp}', { eager: true, query: '?url', import: 'default' })
+const postThumbFiles = import.meta.glob('../content/posts/photos/*/thumbs/*.{jpg,jpeg,png,webp}', { eager: true, query: '?url', import: 'default' })
+
 const slugOf = (path) => path.split('/').slice(-1)[0].replace(/\.md$/, '')
 const eventSlugOf = (path) => path.split('/').slice(-2)[0]
 
 export const renderMarkdown = (md) => marked.parse(md)
 
+/** Groups image URLs by the folder they sit in, pairing each with its thumbnail. */
+function groupPhotos(images, thumbs) {
+  const bySlug = {}
+  for (const [path, url] of Object.entries(images)) {
+    const slug = path.split('/').slice(-2)[0]
+    const name = path.split('/').pop()
+    const thumb = thumbs[path.replace(/([^/]+)$/, 'thumbs/$1')] || url
+    ;(bySlug[slug] ||= []).push({ src: url, thumb, name })
+  }
+  Object.values(bySlug).forEach((list) => list.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })))
+  return bySlug
+}
+
+/** `cover:` is a file name, or `drive:<id end>` for a photo chosen in the dashboard. */
+function withCover(item, photos = []) {
+  const wanted = item.cover.startsWith('drive:') ? (p) => p.name.includes(`-${item.cover.slice(6)}.`) : (p) => p.name === item.cover
+  const chosen = (item.cover && photos.find(wanted)) || photos[0]
+  return { ...item, photos, cover: chosen?.src || '', coverThumb: chosen?.thumb || '' }
+}
+
+const eventPhotos = groupPhotos(imageFiles, thumbFiles)
+const postPhotos = groupPhotos(postImageFiles, postThumbFiles)
+
 export const posts = Object.entries(postFiles)
   .map(([path, raw]) => toBlogPost(slugOf(path), raw))
   .filter((p) => !p.draft)
+  .map((p) => withCover(p, postPhotos[p.slug]))
   .sort(byNewest)
 
-const photosBySlug = {}
-for (const [path, url] of Object.entries(imageFiles)) {
-  const slug = eventSlugOf(path)
-  const name = path.split('/').pop()
-  const thumb = thumbFiles[path.replace(/([^/]+)$/, 'thumbs/$1')] || url
-  ;(photosBySlug[slug] ||= []).push({ src: url, thumb, name })
-}
-
 export const events = Object.entries(eventFiles)
-  .map(([path, raw]) => {
-    const slug = eventSlugOf(path)
-    const event = toEvent(slug, raw)
-    const photos = (photosBySlug[slug] || []).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
-    const chosen = photos.find((p) => p.name === event.cover) || photos[0]
-    return { ...event, photos, cover: chosen?.src || '', coverThumb: chosen?.thumb || '' }
-  })
+  .map(([path, raw]) => toEvent(eventSlugOf(path), raw))
   .filter((e) => !e.draft)
+  .map((e) => withCover(e, eventPhotos[e.slug]))
   .sort(byNewest)
 
 export const getPost = (slug) => posts.find((p) => p.slug === slug)

@@ -24,18 +24,29 @@ After editing in the dashboard, run `git pull` before changing files on your com
 
 ## Photos from Google Drive
 
-Original photos live in the Drive folder set in `src/content/drive.json`. The folder must be shared as **Anyone with the link: Viewer**.
+Original photos live in the Drive folder set in `src/content/drive.json`, shared as **Anyone with the link: Viewer**.
 
 ```
 PORTFOLIO/
-  faurs-2026/          <- named after the event folder (or the event title)
+  faurs-2026/          <- one folder per event (the event folder name)
     01.jpg
-    02.jpg
-  nova-25/
-    group.jpg
+  journal/
+    my-post/           <- photos of one journal post (the post file name)
+      01.jpg
 ```
 
-Each build copies the photos into the site at 1600px and 800px, so visitors never load from Drive. The site rebuilds on every push, once a day, and when you press **Publish Drive photos** in the dashboard. To fetch them locally, run `npm run sync:photos`.
+Each build copies the photos into the site at 1600px and 800px, so visitors never load from Drive. The site rebuilds on every push, once a day, and after photo changes made in the dashboard. To fetch them locally, run `npm run sync:photos`.
+
+### Managing photos in the dashboard
+
+Uploading, deleting, reordering and creating folders needs the small Apps Script in `docs/drive-bridge.gs`, deployed once:
+
+1. Signed in to a Google account that can edit the folder (ideally its owner), create a project at script.google.com and paste the script.
+2. Project Settings, Script properties: add `SECRET` with a long random value.
+3. Deploy, New deployment, Web app: execute as **Me**, access **Anyone**. Authorise it.
+4. In the dashboard open **Drive**, paste the `/exec` address and the secret.
+
+The script only accepts requests carrying the secret and only touches the PORTFOLIO folder. Deleted photos go to the Drive trash. If you change the script, create a new deployment version. If the folder ID changes, update it in the script too.
 
 Without a `GOOGLE_API_KEY` repository secret the build reads the public folder page, which Google could change. Adding a Drive API key makes it use the official API. If a sync fails during a deploy, the deploy stops and the live site stays as it was.
 

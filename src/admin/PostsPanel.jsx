@@ -1,23 +1,26 @@
 import { useState } from 'react'
 import { byNewest, formatDate } from '../lib/frontmatter'
+import DrivePhotos from './DrivePhotos'
 import { ConfirmButton, MarkdownEditor } from './Editor'
 import { slugify, toMarkdownFile } from './files'
 
 const today = () => new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
 const DATE_PATTERN = '\\d{4}(-\\d{2}(-\\d{2})?)?'
 
-function PostForm({ post, posts, events, busy, save, close }) {
+function PostForm({ post, posts, events, busy, save, close, open, photoProps }) {
   const [form, setForm] = useState(() => ({
     title: post?.data.title || '',
     date: post?.data.date || today(),
     category: post?.data.category || '',
     event: post?.data.event || '',
     summary: post?.data.summary || '',
+    cover: post?.data.cover || '',
     draft: post?.data.draft === 'true',
     body: post?.body || '',
   }))
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
   const categories = [...new Set(posts.map((p) => p.data.category).filter(Boolean))]
+  const { drive, fail } = photoProps
 
   const submit = async (e) => {
     e.preventDefault()
@@ -34,11 +37,17 @@ function PostForm({ post, posts, events, busy, save, close }) {
       [{ path, text: toMarkdownFile({ ...post?.data, ...meta }, body) }],
       { [path]: post?.sha },
     )
-    if (ok) close()
+    if (!ok) return
+    if (post) return close()
+    // A new post gets its Drive folder, and stays open so photos can be added straight away.
+    if (drive) await drive.ensure(`journal/${slug}`).catch((error) => fail(error.message))
+    open(slug)
   }
 
   const remove = async () => {
-    if (await save(`Delete post: ${post.data.title}`, [{ path: post.path, delete: true }], { [post.path]: post.sha })) close()
+    if (!(await save(`Delete post: ${post.data.title}`, [{ path: post.path, delete: true }], { [post.path]: post.sha }))) return
+    if (drive) await drive.trashFolder(`journal/${post.slug}`).catch((error) => fail(error.message))
+    close()
   }
 
   return (
@@ -84,6 +93,11 @@ function PostForm({ post, posts, events, busy, save, close }) {
         <textarea required rows={2} value={form.summary} onChange={set('summary')} />
       </label>
       <MarkdownEditor label="Post" value={form.body} onChange={(body) => setForm((f) => ({ ...f, body }))} />
+      {post ? (
+        <DrivePhotos {...photoProps} path={`journal/${post.slug}`} cover={form.cover} onCover={(cover) => setForm((f) => ({ ...f, cover }))} />
+      ) : (
+        <p className="a-banner">Save the post first. Its photo folder is then created and you can upload here.</p>
+      )}
       <label className="a-check">
         <input type="checkbox" checked={form.draft} onChange={set('draft')} /> Draft: keep it off the website
       </label>
@@ -92,7 +106,7 @@ function PostForm({ post, posts, events, busy, save, close }) {
           {busy ? 'Saving…' : form.draft ? 'Save draft' : 'Publish'}
         </button>
         {post && (
-          <ConfirmButton disabled={busy} confirmLabel="Yes, delete this post" onConfirm={remove}>
+          <ConfirmButton disabled={busy} confirmLabel={drive ? 'Yes, delete post and move its photos to Drive trash' : 'Yes, delete this post'} onConfirm={remove}>
             Delete post
           </ConfirmButton>
         )}
@@ -101,11 +115,23 @@ function PostForm({ post, posts, events, busy, save, close }) {
   )
 }
 
-export default function PostsPanel({ posts, events, busy, save, editing, setEditing }) {
+export default function PostsPanel({ posts, events, busy, save, editing, setEditing, photoProps }) {
   const sorted = [...posts].sort((a, b) => byNewest({ date: '', ...a.data }, { date: '', ...b.data }))
 
   if (editing !== null) {
-    return <PostForm key={editing} post={posts.find((p) => p.slug === editing)} posts={posts} events={events} busy={busy} save={save} close={() => setEditing(null)} />
+    return (
+      <PostForm
+        key={editing}
+        post={posts.find((p) => p.slug === editing)}
+        posts={posts}
+        events={events}
+        busy={busy}
+        save={save}
+        photoProps={photoProps}
+        open={setEditing}
+        close={() => setEditing(null)}
+      />
+    )
   }
 
   return (

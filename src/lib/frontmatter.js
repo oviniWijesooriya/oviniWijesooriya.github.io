@@ -45,6 +45,7 @@ export const toBlogPost = (slug, raw) => {
     category: data.category || 'Notes',
     summary: data.summary || '',
     event: data.event || '',
+    cover: data.cover || '',
     draft: data.draft === 'true',
     body,
     minutes: readingMinutes(body),

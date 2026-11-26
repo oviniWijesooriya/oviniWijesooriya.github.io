@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import drive from '../content/drive.json'
+import driveConfig from '../content/drive.json'
 import { pageMeta } from '../lib/seo-data'
 import { useSeo } from '../lib/useSeo'
+import { createDrive, loadManifest } from './drive'
+import DriveSettings from './DriveSettings'
 import EventsPanel from './EventsPanel'
 import { createClient } from './github'
 import { loadContent } from './load'
@@ -18,6 +20,7 @@ const TABS = [
   ['posts', 'Journal', 'M5 4h14v16H5zM8 9h8M8 13h8M8 17h5'],
   ['events', 'Gallery', 'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9.5h.01'],
   ['site', 'Site details', 'M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4'],
+  ['drive', 'Drive', 'M8.5 4h7l6 10-3.5 6h-12L2.5 14zM8.5 4l6 10M15.5 4l-13 10M6 20l6-6h9.5'],
 ]
 
 const Icon = ({ d }) => (
@@ -39,6 +42,9 @@ export default function AdminApp() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState(null) // { type: 'ok' | 'error', text }
   const resumed = useRef(false)
+  const [drive, setDrive] = useState(null)
+  const [manifest, setManifest] = useState({ events: {}, journal: {} })
+  const credentialsRef = useRef(null)
 
   const fail = useCallback((text) => setNotice({ type: 'error', text }), [])
 
@@ -53,6 +59,9 @@ export default function AdminApp() {
         await next.verify()
         await afterVerify?.(credentials)
         const loaded = await loadContent(next)
+        setManifest(await loadManifest())
+        credentialsRef.current = credentials
+        setDrive(credentials.drive ? createDrive(credentials.drive) : null)
         startSession(credentials, username)
         setUser(username)
         setClient(next)
@@ -70,7 +79,8 @@ export default function AdminApp() {
     const session = readSession()
     if (session?.token && !resumed.current) {
       resumed.current = true
-      enter(session.username, async () => ({ token: session.token, repo: session.repo, branch: session.branch }))
+      const { username, ...credentials } = session
+      enter(username, async () => credentials)
     }
   }, [enter])
 
@@ -106,12 +116,40 @@ export default function AdminApp() {
 
   // A new commit rebuilds the site, and the build copies the photos from Drive.
   const syncDrive = () =>
-    save('Publish photos from Google Drive', [{ path: 'src/content/drive.json', text: `${JSON.stringify({ ...drive, requestedAt: new Date().toISOString() }, null, 2)}\n` }])
+    save('Publish photos from Google Drive', [{ path: 'src/content/drive.json', text: `${JSON.stringify({ ...driveConfig, requestedAt: new Date().toISOString() }, null, 2)}\n` }])
+
+  /** Adds or removes the Drive bridge in the encrypted account, after checking the admin password. */
+  const updateDrive = async (password, bridge) => {
+    setBusy(true)
+    setNotice(null)
+    try {
+      await unlock(user, password)
+      const client = bridge ? createDrive(bridge) : null
+      await client?.ping()
+      const { drive: _previous, ...rest } = credentialsRef.current
+      const credentials = bridge ? { ...rest, drive: bridge } : rest
+      await createAccount(user, password, credentials)
+      startSession(credentials, user)
+      credentialsRef.current = credentials
+      setDrive(client)
+      setNotice({ type: 'ok', text: bridge ? 'Google Drive connected.' : 'Google Drive disconnected.' })
+      return true
+    } catch (error) {
+      fail(error.message === 'Username or password is wrong.' ? 'That password is wrong.' : error.message)
+      return false
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const photoProps = { drive, manifest, fail, onChanged: syncDrive, openSettings: () => go('drive') }
 
   const logout = () => {
     endSession()
     setClient(null)
     setContent(null)
+    setDrive(null)
+    credentialsRef.current = null
     setNotice(null)
     setPostEditing(null)
     setEventEditing(null)
@@ -182,18 +220,21 @@ export default function AdminApp() {
         <main className="a-main">
           {/* Panels stay mounted so unsaved edits survive switching sections. */}
           <div hidden={tab !== 'overview'}>
-            <Overview content={content} busy={busy} openPost={openPost} openEvent={openEvent} syncDrive={syncDrive} />
+            <Overview content={content} manifest={manifest} connected={Boolean(drive)} busy={busy} openPost={openPost} openEvent={openEvent} openDrive={() => go('drive')} syncDrive={syncDrive} />
           </div>
           <div hidden={tab !== 'posts'}>
-            <PostsPanel posts={content.posts} events={content.events} busy={busy} save={save} editing={postEditing} setEditing={setPostEditing} />
+            <PostsPanel posts={content.posts} events={content.events} busy={busy} save={save} editing={postEditing} setEditing={setPostEditing} photoProps={photoProps} />
           </div>
           <div hidden={tab !== 'events'}>
-            <EventsPanel events={content.events} client={client} busy={busy} save={save} fail={fail} editing={eventEditing} setEditing={setEventEditing} />
+            <EventsPanel events={content.events} busy={busy} save={save} editing={eventEditing} setEditing={setEventEditing} photoProps={photoProps} />
           </div>
           <div hidden={tab !== 'site'}>
             {/* Keyed on the file version: saving a post doesn't wipe unsaved site edits. */}
             <SitePanel key={content.siteSha} site={content.site} sha={content.siteSha} section={section} setSection={setSection} busy={busy} save={save} fail={fail} />
           </div>
+          {tab === 'drive' && (
+            <DriveSettings connected={Boolean(drive)} busy={busy} connect={(bridge, password) => updateDrive(password, bridge)} disconnect={(password) => updateDrive(password, null)} />
+          )}
         </main>
       </div>
 

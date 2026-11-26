@@ -1,5 +1,4 @@
 import { parseFrontmatter } from '../lib/frontmatter.js'
-import { IMAGE_RE } from './files.js'
 
 /** Reads everything the dashboard edits from the repository. */
 export async function loadContent(client) {
@@ -20,15 +19,7 @@ export async function loadContent(client) {
       .filter((f) => /^src\/content\/events\/[^/]+\/index\.md$/.test(f.path))
       .map(async (f) => {
         const dir = f.path.slice(0, -'index.md'.length)
-        const photos = files
-          .filter((p) => p.path.startsWith(dir) && IMAGE_RE.test(p.path) && !p.path.slice(dir.length).includes('/'))
-          .map((p) => {
-            const name = p.path.slice(dir.length)
-            const thumb = files.find((t) => t.path === `${dir}thumbs/${name}`)
-            return { path: p.path, sha: thumb?.sha || p.sha, thumbPath: thumb?.path, name }
-          })
-          .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
-        return { ...(await read(f)), slug: dir.split('/').slice(-2)[0], photos }
+        return { ...(await read(f)), slug: dir.split('/').slice(-2)[0], files: files.filter((x) => x.path.startsWith(dir)).map((x) => x.path) }
       }),
   )
 

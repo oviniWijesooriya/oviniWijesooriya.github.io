@@ -31,7 +31,7 @@ export default function Blog() {
         </p>
         <div className="post-list">
           {shown.map((p) => (
-            <PostRow key={p.slug} post={p} cover={getEvent(p.event)} />
+            <PostRow key={p.slug} post={p} cover={p.cover ? p : getEvent(p.event)} />
           ))}
         </div>
       </section>

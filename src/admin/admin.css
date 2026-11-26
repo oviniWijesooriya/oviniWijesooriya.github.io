@@ -131,7 +131,16 @@ details.a-item .a-list { background: var(--chalk); }
 .a-photos img, .a-thumb-wait { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; background: var(--mist); }
 .a-thumb-wait { display: grid; place-items: center; color: var(--muted); }
 .a-photos .is-removed img { opacity: 0.3; }
-.a-new { font-weight: 700; color: var(--leaf); }
+.a-new { font-weight: 700; font-style: normal; color: var(--leaf); }
+.a-photo { padding: 0; border: 3px solid transparent; border-radius: 12px; background: none; cursor: pointer; }
+.a-photo:disabled { cursor: default; }
+.is-selected .a-photo { border-color: var(--leaf); box-shadow: 0 0 0 3px rgba(46, 107, 78, 0.25); }
+.a-photos li > span { overflow-wrap: anywhere; }
+.a-photo-tools { position: sticky; top: 72px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 0; background: var(--chalk); }
+.a-photo-tools .a-btn { min-height: 38px; padding: 4px 14px; font-size: 14px; }
+.a-banner { padding: 12px 14px; border-radius: 10px; background: var(--mist); font-size: 15px; }
+.a-steps { list-style: decimal; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+code { overflow-wrap: anywhere; }
 .a-portrait { width: 160px; border-radius: 12px; }
 
 .a-notice { position: fixed; left: 50%; bottom: 20px; z-index: 40; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; width: min(640px, calc(100% - 32px)); padding: 14px 18px; border-radius: 14px; background: var(--leaf); color: #fff; font-weight: 600; box-shadow: 0 18px 40px -18px rgba(15, 36, 30, 0.6); }

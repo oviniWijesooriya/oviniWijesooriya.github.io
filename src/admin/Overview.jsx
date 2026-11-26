@@ -1,17 +1,16 @@
 import { byNewest, formatDate } from '../lib/frontmatter'
-import drive from '../content/drive.json'
 
 const newest = (items) => [...items].sort((a, b) => byNewest({ date: '', ...a.data }, { date: '', ...b.data }))
 
-export default function Overview({ content, busy, openPost, openEvent, syncDrive }) {
+export default function Overview({ content, manifest, connected, busy, openPost, openEvent, openDrive, syncDrive }) {
   const { posts, events } = content
   const drafts = [...posts, ...events].filter((x) => x.data.draft === 'true').length
-  const uploaded = events.reduce((n, e) => n + e.photos.length, 0)
-  const empty = events.filter((e) => e.photos.length === 0)
+  const photos = [...Object.values(manifest.events), ...Object.values(manifest.journal)].reduce((n, list) => n + list.length, 0)
+  const empty = events.filter((e) => !manifest.events[e.slug]?.length)
   const stats = [
     ['Journal posts', posts.length],
     ['Event galleries', events.length],
-    ['Photos uploaded here', uploaded],
+    ['Photos on the site', photos],
     ['Drafts', drafts],
   ]
 
@@ -50,15 +49,17 @@ export default function Overview({ content, busy, openPost, openEvent, syncDrive
 
         <section className="a-card">
           <header>
-            <h3>Photos from Google Drive</h3>
+            <h3>Photos in Google Drive</h3>
           </header>
           <p>
-            Put photos in the Drive folder, inside a folder named after the event (for example <code>nova-25</code>), then publish them.
+            {connected
+              ? 'Open an event or post to upload, delete and reorder its photos. If you change files directly in Drive, publish them here.'
+              : 'Connect Drive to upload, delete and reorder photos from this dashboard.'}
           </p>
           <div className="a-card-actions">
-            <a className="a-btn a-btn-quiet" href={`https://drive.google.com/drive/folders/${drive.folderId}`} target="_blank" rel="noreferrer">
-              Open Drive folder
-            </a>
+            <button type="button" className={`a-btn ${connected ? 'a-btn-quiet' : ''}`} onClick={openDrive}>
+              {connected ? 'Drive settings' : 'Connect Drive'}
+            </button>
             <button type="button" className="a-btn" disabled={busy} onClick={syncDrive}>
               {busy ? 'Working…' : 'Publish Drive photos'}
             </button>
@@ -68,12 +69,11 @@ export default function Overview({ content, busy, openPost, openEvent, syncDrive
         {empty.length > 0 && (
           <section className="a-card a-card-wide">
             <header>
-              <h3>Galleries with no uploads here</h3>
+              <h3>Galleries with no photos yet</h3>
               <button type="button" className="a-btn a-btn-quiet" onClick={() => openEvent('')}>
                 Add an event
               </button>
             </header>
-            <p className="a-hint">These may already have photos coming from Drive.</p>
             <ul className="a-chips">
               {newest(empty).map((e) => (
                 <li key={e.slug}>

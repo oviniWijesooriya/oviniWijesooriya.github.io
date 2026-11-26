@@ -82,7 +82,7 @@ export default function Home() {
         </div>
         <div className="post-list">
           {latest.map((p) => (
-            <PostRow key={p.slug} post={p} cover={getEvent(p.event)} />
+            <PostRow key={p.slug} post={p} cover={p.cover ? p : getEvent(p.event)} />
           ))}
         </div>
       </section>

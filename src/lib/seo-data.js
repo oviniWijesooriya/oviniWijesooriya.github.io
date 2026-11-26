@@ -127,7 +127,7 @@ export function pageMeta(kind, item = {}) {
           person,
           page('ImageGallery', path, item.title, item.summary, {
             ...(item.place ? { contentLocation: { '@type': 'Place', name: item.place } } : {}),
-            dateCreated: item.date,
+            ...(item.date ? { dateCreated: item.date } : {}),
           }),
           crumbs([['Home', '/'], ['Gallery', '/gallery/'], [item.title, path]]),
         ),

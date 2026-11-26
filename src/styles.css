@@ -358,7 +358,8 @@ html:not(.is-ready) .hero-name span, html:not(.is-ready) .hero-copy > *, html:no
    Post
    ============================================================ */
 .post { padding-block: clamp(40px, 6vw, 72px) clamp(56px, 8vw, 96px); }
-.post-head, .post-body, .callout, .post-nav, .post-cover { max-width: 780px; margin-inline: auto; }
+.post-head, .post-body, .callout, .post-nav, .post-cover, .post-photos { max-width: 780px; margin-inline: auto; }
+.post-photos { margin-top: 40px; column-count: 2; }
 .post-head { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; margin-bottom: 36px; }
 .post-title { font-size: clamp(38px, 6vw, 68px); font-weight: 700; font-stretch: 90%; line-height: 0.98; letter-spacing: -0.04em; }
 .post-summary { font-family: var(--reading); font-size: clamp(21px, 2.3vw, 26px); line-height: 1.4; color: var(--muted); }

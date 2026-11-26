@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Cover from '../components/Cover'
+import Lightbox from '../components/Lightbox'
 import Prose from '../components/Prose'
 import { formatDate } from '../lib/frontmatter'
 import { getEvent, getPost, posts } from '../lib/content'
@@ -10,6 +12,7 @@ import NotFound from './NotFound'
 export default function Post() {
   const { slug } = useParams()
   const post = getPost(slug)
+  const [active, setActive] = useState(null)
   useSeo(post ? pageMeta('post', post) : pageMeta('404'))
   if (!post) return <NotFound />
 
@@ -33,9 +36,22 @@ export default function Post() {
         </p>
       </header>
 
-      {event && <Cover item={event} className="post-cover" full />}
+      {post.cover ? <Cover item={post} className="post-cover" full /> : event && <Cover item={event} className="post-cover" full />}
 
       <Prose markdown={post.body} className="post-body" />
+
+      {post.photos.length > 1 && (
+        <ul className="photo-wall post-photos" aria-label="Photos">
+          {post.photos.map((p, i) => (
+            <li key={p.src}>
+              <button type="button" className="photo" onClick={() => setActive(i)} aria-label={`Open photo ${i + 1} of ${post.photos.length}`}>
+                <img src={p.thumb} alt={`${post.title}, photo ${i + 1}`} loading="lazy" decoding="async" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Lightbox photos={post.photos} index={active} title={post.title} onClose={() => setActive(null)} onChange={setActive} />
 
       {event && (
         <aside className="callout" aria-label="Related gallery">
