@@ -5,9 +5,10 @@ import { events, getEvent, getPost, posts } from '../lib/content'
 import site from '../data'
 import { EducationSteps, ExperienceTabs, SkillLabel } from './AboutSections'
 import AwardSlider from './AwardSlider'
-import { EventCard, PostRow } from './Cards'
+import { EventCard } from './Cards'
 import ContactForm from './ContactForm'
 import FeaturedAward from './FeaturedAward'
+import { JournalIndex, JournalSpread } from './Journal'
 import Lightbox from './Lightbox'
 import NowPanels from './NowPanels'
 import Prose from './Prose'
@@ -120,11 +121,7 @@ const Facts = ({ s }) => (
 function LatestPosts({ s }) {
   return (
     <Block s={s} link={textLink('/blog/', s.linkLabel)}>
-      <div className="post-list">
-        {posts.slice(0, count(s.count, 3)).map((p) => (
-          <PostRow key={p.slug} post={p} cover={p.cover ? p : getEvent(p.event)} />
-        ))}
-      </div>
+      <JournalIndex posts={posts.slice(0, count(s.count, 3))} />
     </Block>
   )
 }
@@ -166,11 +163,7 @@ function PostList({ s }) {
       <p className="result-count" aria-live="polite">
         {shown.length} {shown.length === 1 ? 'post' : 'posts'}
       </p>
-      <div className="post-list">
-        {shown.map((p) => (
-          <PostRow key={p.slug} post={p} cover={p.cover ? p : getEvent(p.event)} />
-        ))}
-      </div>
+      <JournalSpread posts={shown} level={s.heading ? 'h3' : 'h2'} />
     </section>
   )
 }
