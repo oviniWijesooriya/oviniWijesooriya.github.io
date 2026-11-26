@@ -1,10 +1,41 @@
 // Page metadata + JSON-LD. Used by the app (useSeo) and by scripts/prerender.mjs so both agree.
 
+import site from '../content/site.json' with { type: 'json' }
+
 export const SITE = 'https://ovini.me'
 export const SITE_NAME = 'Ovini Wijesooriya'
-export const DEFAULT_IMAGE = `${SITE}/ovini.jpg`
+export const PORTRAIT = `${SITE}/ovini.jpg`
+/** The picture shown when a page without photos of its own is shared (1200 x 630). */
+export const SOCIAL_CARD = `${SITE}/social-card.jpg`
 const personId = `${SITE}/#person`
 const websiteId = `${SITE}/#website`
+
+// Awards, schools, certificates and profiles are read from the page content, so they stay current
+// with whatever is edited in the dashboard.
+const sectionsOf = (page, type) => (site.pages[page]?.sections || []).filter((s) => s.type === type && s.visible !== false)
+
+export const awards = () =>
+  sectionsOf('achievements', 'awardYears').flatMap((s) =>
+    (s.groups || []).flatMap((group) =>
+      (group.items || []).map((w) => {
+        const name = w.badge && !w.title.toLowerCase().includes(w.badge.toLowerCase()) ? `${w.badge}: ${w.title}` : w.title
+        return { name, by: w.org || '', when: group.label }
+      }),
+    ),
+  )
+
+const study = () => sectionsOf('about', 'timeline').flatMap((s) => s.items || [])
+// "BSc …" and "Diploma …" are courses, so the institution is the other line; otherwise the title is the school.
+const school = (e) => ({
+  '@type': 'EducationalOrganization',
+  name: /^(bsc|ba|msc|diploma|certificate|degree)\b/i.test(e.title) ? e.place : e.title,
+})
+
+const certificates = () =>
+  sectionsOf('about', 'skills')
+    .flatMap((s) => s.groups || [])
+    .filter((g) => /certificate/i.test(g.label))
+    .flatMap((g) => g.items || [])
 
 const person = {
   '@type': 'Person',
@@ -13,26 +44,20 @@ const person = {
   givenName: 'Ovini',
   familyName: 'Wijesooriya',
   url: `${SITE}/`,
-  image: DEFAULT_IMAGE,
+  image: PORTRAIT,
   jobTitle: 'Food Science & Technology Undergraduate and Researcher',
   description:
     'Food Science & Technology undergraduate at the University of Peradeniya, Sri Lanka. Alfred Baur Gold Medalist (Most Outstanding Emerging Researcher) at FAuRS 2026, student leader and public speaker.',
-  nationality: 'Sri Lankan',
-  homeLocation: { '@type': 'Place', name: 'Sri Lanka' },
-  alumniOf: [
-    { '@type': 'CollegeOrUniversity', name: 'University of Peradeniya', url: 'https://www.pdn.ac.lk' },
-    { '@type': 'CollegeOrUniversity', name: 'University of Colombo School of Computing' },
-  ],
-  award: [
-    'Alfred Baur Gold Medal, Most Outstanding Emerging Researcher, FAuRS 2026',
-    'Best Presenter, FAuRS 2026',
-    'Winner, Scientific Eye Photography, FAuRS 2026',
-    '1st Runner-up, Research Briefs (Sinhala), FAuRS 2026',
-    '2nd Runner-up, Best Green Innovation, Profood Propack AgBiz Exhibition 2025',
-  ],
+  nationality: { '@type': 'Country', name: 'Sri Lanka' },
+  homeLocation: { '@type': 'Place', name: 'Peradeniya, Sri Lanka', address: { '@type': 'PostalAddress', addressLocality: 'Peradeniya', addressCountry: 'LK' } },
+  affiliation: study().filter((e) => e.current).map((e) => ({ '@type': 'CollegeOrUniversity', name: e.place })),
+  alumniOf: study().filter((e) => !e.current).map(school),
+  memberOf: { '@type': 'Organization', name: 'AIESEC in Sri Lanka' },
+  award: awards().map((a) => [a.name, a.by].filter(Boolean).join(', ')),
+  hasCredential: certificates().map((name) => ({ '@type': 'EducationalOccupationalCredential', name })),
   knowsAbout: ['Food Science', 'Food Technology', 'Research', 'Mobile Health', 'Food Waste Reduction', 'Public Speaking', 'Event Compering', 'Digital Marketing', 'Project Management'],
   knowsLanguage: ['en', 'si'],
-  sameAs: ['https://www.linkedin.com/in/ovini-wijesooriya', 'https://www.facebook.com/OvWijesuriya', 'https://mealbridge.lk'],
+  sameAs: [site.contact.linkedin, site.contact.facebook, 'https://mealbridge.lk'].filter(Boolean),
 }
 
 const website = { '@type': 'WebSite', '@id': websiteId, url: `${SITE}/`, name: SITE_NAME, inLanguage: 'en', publisher: { '@id': personId } }
@@ -57,18 +82,21 @@ const page = (type, path, name, description, extra = {}) => ({
 
 /** Builds `{ title, description, path, ogType, jsonLd }` for a page kind. */
 export function pageMeta(kind, item = {}) {
-  const meta = defaultMeta(kind, item)
+  // The page's own photo, when it has one: a built file path, not the photo's name in the content.
+  const photo = [item.image, item.cover].find((v) => v?.startsWith('/'))
+  const image = photo ? `${SITE}${photo}` : SOCIAL_CARD
+  const meta = { ...defaultMeta(kind, item, image), image, imageAlt: photo ? item.title : 'Ovini Wijesooriya, Food Science & Technology, University of Peradeniya' }
   // The dashboard can override a page's search title and description.
   if (!item.seoTitle && !item.seoDescription) return meta
   return { ...meta, title: item.seoTitle || meta.title, description: item.seoDescription || meta.description }
 }
 
-function defaultMeta(kind, item) {
+function defaultMeta(kind, item, image) {
   switch (kind) {
     case 'home': {
       const title = 'Ovini Wijesooriya | Food Scientist, Researcher & Student Leader, Sri Lanka'
       const description =
-        'Ovini Wijesooriya is a Food Science & Technology undergraduate at the University of Peradeniya, Sri Lanka, and the Alfred Baur Gold Medalist at FAuRS 2026. Read her journal and browse event galleries.'
+        'Ovini Wijesooriya: Food Science & Technology undergraduate at the University of Peradeniya, Sri Lanka, and Alfred Baur Gold Medalist (FAuRS 2026). Journal and galleries.'
       return { title, description, path: '/', ogType: 'profile', jsonLd: graph(website, person, page('ProfilePage', '/', title, description, { mainEntity: { '@id': personId } })) }
     }
     case 'about': {
@@ -79,7 +107,8 @@ function defaultMeta(kind, item) {
     case 'achievements': {
       const title = 'Awards & Achievements | Ovini Wijesooriya'
       const description = 'Alfred Baur Gold Medal at FAuRS 2026, Best Presenter, Scientific Eye Photography winner, Best Green Innovation runner-up and more: the awards of Ovini Wijesooriya, year by year.'
-      return { title, description, path: '/achievements/', ogType: 'website', jsonLd: graph(website, person, page('WebPage', '/achievements/', title, description), crumbs([['Home', '/'], ['Achievements', '/achievements/']])) }
+      const list = { '@type': 'ItemList', name: 'Awards and achievements', itemListElement: awards().map((a, i) => ({ '@type': 'ListItem', position: i + 1, name: [a.name, a.by].filter(Boolean).join(', ') })) }
+      return { title, description, path: '/achievements/', ogType: 'website', jsonLd: graph(website, person, page('CollectionPage', '/achievements/', title, description, { mainEntity: list }), crumbs([['Home', '/'], ['Achievements', '/achievements/']])) }
     }
     case 'blog': {
       const title = 'Journal | Ovini Wijesooriya'
@@ -104,10 +133,10 @@ function defaultMeta(kind, item) {
             headline: item.title,
             description: item.summary,
             datePublished: item.date,
-            dateModified: item.date,
+            dateModified: item.updated || item.date,
             articleSection: item.category,
             inLanguage: 'en',
-            image: DEFAULT_IMAGE,
+            image,
             author: { '@id': personId },
             publisher: { '@id': personId },
             isPartOf: { '@id': websiteId },
@@ -135,6 +164,7 @@ function defaultMeta(kind, item) {
           page('ImageGallery', path, item.title, item.summary, {
             ...(item.place ? { contentLocation: { '@type': 'Place', name: item.place } } : {}),
             ...(item.date ? { dateCreated: item.date } : {}),
+            ...(item.images?.length ? { image: item.images.map((src) => `${SITE}${src}`) } : {}),
           }),
           crumbs([['Home', '/'], ['Gallery', '/gallery/'], [item.title, path]]),
         ),

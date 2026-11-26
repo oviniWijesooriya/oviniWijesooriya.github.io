@@ -1,13 +1,14 @@
 // Runs after `vite build`. Writes one real HTML file per route (dist/blog/<slug>/index.html, ...)
 // with its own <title>, description, canonical, Open Graph tags, JSON-LD and a readable fallback,
 // so search engines and AI crawlers see each page without running JavaScript.
-// It also generates sitemap.xml and the page list in llms.txt, and a 404.html for GitHub Pages.
-import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs'
+// It also generates sitemap.xml (with the photos), feed.xml, llms.txt, llms-full.txt and a 404.html.
+import { execFileSync } from 'node:child_process'
+import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { marked } from 'marked'
 import { applyOrder, byNewest, formatDate, toBlogPost, toEvent } from '../src/lib/frontmatter.js'
-import { DEFAULT_IMAGE, SITE, pageMeta } from '../src/lib/seo-data.js'
+import { SITE, SOCIAL_CARD, awards, pageMeta } from '../src/lib/seo-data.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(root, 'dist')
@@ -32,6 +33,44 @@ const newestEvents = readdirSync(join(root, 'src/content/events'), { withFileTyp
   .sort(byNewest)
 const events = applyOrder(newestEvents, order.events)
 
+// ---- photos: Vite renames them, and its manifest says what each is now called ----
+const manifestPath = join(dist, '.vite/manifest.json')
+const built = new Map(Object.values(JSON.parse(readFileSync(manifestPath, 'utf8'))).filter((e) => e.src).map((e) => [e.src, `/${e.file}`]))
+rmSync(join(dist, '.vite'), { recursive: true, force: true })
+
+/** The built full-size photos of one folder, the chosen cover first (same rules as src/lib/content.js). */
+function photosIn(folder, cover = '') {
+  const prefix = `src/content/${folder}/`
+  const names = [...built.keys()]
+    .filter((src) => src.startsWith(prefix) && !src.slice(prefix.length).includes('/'))
+    .filter((src) => /\.(jpe?g|png|webp|avif)$/i.test(src))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+  const chosen = cover.startsWith('drive:') ? names.find((n) => n.includes(`-${cover.slice(6)}.`)) : names.find((n) => n === prefix + cover)
+  return [...new Set([chosen, ...names].filter(Boolean))].map((src) => built.get(src))
+}
+
+for (const e of events) {
+  e.images = photosIn(`events/${e.slug}`, e.cover)
+  e.image = e.images[0]
+}
+for (const p of posts) {
+  p.images = photosIn(`posts/photos/${p.slug}`, p.cover)
+  p.image = p.images[0] || events.find((e) => e.slug === p.event)?.image
+}
+
+/** The date a file or folder last changed, from git. Undefined when git cannot say. */
+function lastChanged(...paths) {
+  try {
+    return execFileSync('git', ['log', '-1', '--format=%cs', '--', ...paths], { cwd: root, encoding: 'utf8' }).trim() || undefined
+  } catch {
+    return undefined
+  }
+}
+for (const p of posts) {
+  const changed = lastChanged(`src/content/posts/${p.slug}.md`)
+  if (changed && changed > p.date) p.updated = changed
+}
+
 // The preloader spells the name from the header, one letter at a time.
 const letters = [...site.brand]
 const mark = `${letters.map((c, i) => `<span style="--i:${i}">${c === ' ' ? '&nbsp;' : esc(c)}</span>`).join('')}<b style="--i:${letters.length}"></b>`
@@ -50,19 +89,28 @@ function headBlock(meta) {
     `<meta property="og:url" content="${SITE}${meta.path}" />`,
     `<meta property="og:title" content="${esc(meta.title)}" />`,
     `<meta property="og:description" content="${esc(meta.description)}" />`,
-    `<meta property="og:image" content="${DEFAULT_IMAGE}" />`,
+    `<meta property="og:image" content="${meta.image}" />`,
+    `<meta property="og:image:alt" content="${esc(meta.imageAlt)}" />`,
+    ...(meta.image === SOCIAL_CARD ? ['<meta property="og:image:width" content="1200" />', '<meta property="og:image:height" content="630" />'] : []),
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${esc(meta.title)}" />`,
     `<meta name="twitter:description" content="${esc(meta.description)}" />`,
-    `<meta name="twitter:image" content="${DEFAULT_IMAGE}" />`,
+    `<meta name="twitter:image" content="${meta.image}" />`,
+    `<meta name="twitter:image:alt" content="${esc(meta.imageAlt)}" />`,
   ]
+  if (meta.published) lines.push(`<meta property="article:published_time" content="${meta.published}" />`, `<meta property="article:author" content="Ovini Wijesooriya" />`)
   if (meta.jsonLd) lines.push(`<script type="application/ld+json" id="page-jsonld">${JSON.stringify(meta.jsonLd).replace(/</g, '\\u003c')}</script>`)
   return lines.join('\n    ')
 }
 
 // ---- readable fallback bodies (replaced as soon as the app mounts) ----
 const nav = `<nav aria-label="Main">${site.nav.filter((l) => l.visible !== false).map((l) => `<a href="${esc(l.href)}">${esc(l.label)}</a>`).join(' | ')}</nav>`
-const wrap = (inner) => `<main style="font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:2rem;line-height:1.6">${nav}${inner}</main>`
+// every page also links to the contact page and profiles, as the header and footer do once the app runs
+const outro = `<p>${[[site.headerButton?.href, site.headerButton?.label], [site.contact.linkedin, 'LinkedIn'], [site.contact.facebook, 'Facebook']]
+  .filter(([href, label]) => href && label)
+  .map(([href, label]) => `<a href="${esc(href)}">${esc(label)}</a>`)
+  .join(' | ')}</p>`
+const wrap = (inner) => `<main style="font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:2rem;line-height:1.6">${nav}${inner}${outro}</main>`
 const postList = () => `<ul>${posts.map((p) => `<li><a href="/blog/${p.slug}/">${esc(p.title)}</a>: ${esc(p.summary)}</li>`).join('')}</ul>`
 const eventList = () => `<ul>${events.map((e) => `<li><a href="/gallery/${e.slug}/">${esc(e.title)}</a> (${esc(formatDate(e.date))}): ${esc(e.summary)}</li>`).join('')}</ul>`
 
@@ -129,6 +177,7 @@ const pages = [
 
 for (const [kind, item] of pages) {
   const meta = pageMeta(kind, item || site.pages[kind])
+  if (kind === 'post') meta.published = item.date
   write(meta.path, render(meta, fallbacks[kind](item)))
 }
 write('/404.html', render(pageMeta('404'), fallbacks.notfound()))
@@ -138,33 +187,99 @@ write(
 )
 
 // ---- sitemap ----
-const lastmod = (d) => (/^\d{4}-\d{2}-\d{2}$/.test(d) ? d : new Date().toISOString().slice(0, 10))
-const today = new Date().toISOString().slice(0, 10)
+const CONTENT = 'src/content/site.json'
 const urls = [
-  ['/', today, '1.0'],
-  ['/about/', today, '0.8'],
-  ['/achievements/', today, '0.8'],
-  ['/blog/', today, '0.9'],
-  ['/gallery/', today, '0.8'],
-  ['/contact/', today, '0.6'],
-  ...posts.map((p) => [`/blog/${p.slug}/`, lastmod(p.date), '0.7']),
-  ...events.map((e) => [`/gallery/${e.slug}/`, lastmod(e.date), '0.6']),
+  { path: '/', changed: lastChanged(CONTENT, 'src/content/posts', 'src/content/events', 'public/ovini.jpg'), images: ['/ovini.jpg'] },
+  { path: '/about/', changed: lastChanged(CONTENT) },
+  { path: '/achievements/', changed: lastChanged(CONTENT) },
+  { path: '/blog/', changed: lastChanged('src/content/posts', 'src/content/order.json') },
+  { path: '/gallery/', changed: lastChanged('src/content/events', 'src/content/order.json') },
+  { path: '/contact/', changed: lastChanged(CONTENT) },
+  ...posts.map((p) => ({ path: `/blog/${p.slug}/`, changed: p.updated || lastChanged(`src/content/posts/${p.slug}.md`), images: p.image ? [p.image] : [] })),
+  ...events.map((e) => ({ path: `/gallery/${e.slug}/`, changed: lastChanged(`src/content/events/${e.slug}`), images: e.images })),
 ]
+const entry = ({ path, changed, images = [] }) =>
+  [
+    '  <url>',
+    `    <loc>${SITE}${path}</loc>`,
+    changed && `    <lastmod>${changed}</lastmod>`,
+    ...images.map((src) => `    <image:image><image:loc>${esc(SITE + src)}</image:loc></image:image>`),
+    '  </url>',
+  ]
+    .filter(Boolean)
+    .join('\n')
 writeFileSync(
   join(dist, 'sitemap.xml'),
-  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
-    .map(([loc, mod, pr]) => `  <url>\n    <loc>${SITE}${loc}</loc>\n    <lastmod>${mod}</lastmod>\n    <priority>${pr}</priority>\n  </url>`)
-    .join('\n')}\n</urlset>\n`,
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${urls.map(entry).join('\n')}\n</urlset>\n`,
 )
 
-// ---- llms.txt: keep the hand-written facts, regenerate the page list ----
-const llmsPath = join(root, 'public/llms.txt')
-const base = readFileSync(llmsPath, 'utf8').split('## Pages')[0].trimEnd()
+// ---- feed.xml: the journal, for feed readers and crawlers ----
+const rfcDate = (d) => new Date(`${d.length === 4 ? `${d}-01-01` : d.length === 7 ? `${d}-01` : d}T00:00:00Z`).toUTCString()
 writeFileSync(
-  join(dist, 'llms.txt'),
-  `${base}\n\n## Pages\n- [Home](${SITE}/): introduction, latest posts and event galleries.\n- [About](${SITE}/about/): education, experience, research and projects.\n- [Achievements](${SITE}/achievements/): awards year by year.\n- [Journal](${SITE}/blog/): posts about events attended and what was achieved.\n- [Gallery](${SITE}/gallery/): one photo gallery per event.\n- [Contact](${SITE}/contact/): send a message.\n\n## Journal posts\n${posts
-    .map((p) => `- [${p.title}](${SITE}/blog/${p.slug}/): ${p.summary}`)
-    .join('\n')}\n\n## Event galleries\n${events.map((e) => `- [${e.title}](${SITE}/gallery/${e.slug}/): ${e.summary}`).join('\n')}\n`,
+  join(dist, 'feed.xml'),
+  `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ovini Wijesooriya: Journal</title>
+    <link>${SITE}/blog/</link>
+    <description>${esc(site.pages.blog.lede)}</description>
+    <language>en</language>
+    <atom:link href="${SITE}/feed.xml" rel="self" type="application/rss+xml" />
+${posts
+  .map(
+    (p) => `    <item>
+      <title>${esc(p.title)}</title>
+      <link>${SITE}/blog/${p.slug}/</link>
+      <guid>${SITE}/blog/${p.slug}/</guid>
+      <pubDate>${rfcDate(p.date)}</pubDate>
+      <category>${esc(p.category)}</category>
+      <description>${esc(p.summary)}</description>
+    </item>`,
+  )
+  .join('\n')}
+  </channel>
+</rss>
+`,
 )
 
-console.log(`Prerendered ${pages.length} pages + 404.html, sitemap.xml, llms.txt`)
+// ---- llms.txt: the introduction from public/llms.txt, then the facts as they now stand on the site ----
+const visible = (page) => (site.pages[page]?.sections || []).filter((s) => s.visible !== false)
+const all = (page, type) => visible(page).filter((s) => s.type === type)
+const bullet = (parts, separator = ', ') => `- ${parts.filter(Boolean).join(separator)}`
+const block = (title, lines) => (lines.length ? `## ${title}\n${lines.join('\n')}` : '')
+const hero = all('home', 'hero')[0]
+
+const facts = [
+  block('Where things stand', [...(hero?.lede ? [bullet([hero.lede])] : []), ...all('home', 'facts').flatMap((s) => (s.items || []).map((i) => bullet([`${i.k}: ${i.v}`, i.href], ' ')))]),
+  block('Awards and achievements', awards().map((a) => bullet([a.name, a.by, a.when]))),
+  block('Further recognition', all('achievements', 'ribbons').flatMap((s) => (s.items || []).map((i) => bullet([i.title, i.text], ': ')))),
+  block('Research and projects', all('about', 'projects').flatMap((s) => [...(s.items || []).map((i) => bullet([`${i.title}: ${i.text}`, i.href], ' ')), ...(s.note ? [bullet([s.note.replace(/\*/g, '')])] : [])])),
+  block('Education', all('about', 'timeline').flatMap((s) => (s.items || []).map((i) => bullet([i.title, i.place, i.when])))),
+  block('Experience', all('about', 'experience').flatMap((s) => (s.groups || []).flatMap((g) => (g.items || []).map((i) => bullet([`${g.label}: ${i.role}`, i.org, i.when]))))),
+  block('Skills, certificates and languages', all('about', 'skills').flatMap((s) => (s.groups || []).map((g) => bullet([`${g.label}: ${(g.items || []).join('; ')}`])))),
+  block('Contact', [
+    `- Contact form: ${SITE}/contact/`,
+    ...[['LinkedIn', site.contact.linkedin], ['Facebook', site.contact.facebook]].filter(([, url]) => url).map(([label, url]) => `- ${label}: ${url}`),
+  ]),
+]
+const index = [
+  block('Pages', [
+    `- [Home](${SITE}/): introduction, current work, latest posts and event galleries.`,
+    `- [About](${SITE}/about/): research and projects, experience, education and skills.`,
+    `- [Achievements](${SITE}/achievements/): the headline award, awards year by year and further recognition.`,
+    `- [Journal](${SITE}/blog/): posts about events attended and what was achieved.`,
+    `- [Gallery](${SITE}/gallery/): one photo gallery per event.`,
+    `- [Contact](${SITE}/contact/): send a message.`,
+  ]),
+  block('Journal posts', posts.map((p) => `- [${p.title}](${SITE}/blog/${p.slug}/): ${p.summary}`)),
+  block('Event galleries', events.map((e) => `- [${e.title}](${SITE}/gallery/${e.slug}/) (${formatDate(e.date)}): ${e.summary}`)),
+]
+const intro = readFileSync(join(root, 'public/llms.txt'), 'utf8').trim()
+const llms = [intro, ...facts, ...index].filter(Boolean).join('\n\n')
+writeFileSync(join(dist, 'llms.txt'), `${llms}\n\nThe full text of every journal post: ${SITE}/llms-full.txt\n`)
+writeFileSync(
+  join(dist, 'llms-full.txt'),
+  `${llms}\n\n${posts.map((p) => `## ${p.title}\n${SITE}/blog/${p.slug}/ | ${formatDate(p.date)} | ${p.category}\n\n${p.body.replace(/\]\(\//g, `](${SITE}/`)}`).join('\n\n')}\n`,
+)
+
+console.log(`Prerendered ${pages.length} pages + 404.html, sitemap.xml, feed.xml, llms.txt, llms-full.txt`)

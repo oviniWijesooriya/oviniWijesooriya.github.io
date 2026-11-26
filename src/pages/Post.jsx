@@ -13,7 +13,7 @@ export default function Post() {
   const { slug } = useParams()
   const post = getPost(slug)
   const [active, setActive] = useState(null)
-  useSeo(post ? pageMeta('post', post) : pageMeta('404'))
+  useSeo(post ? pageMeta('post', { ...post, image: post.cover || getEvent(post.event)?.cover }) : pageMeta('404'))
   if (!post) return <NotFound />
 
   const event = getEvent(post.event)
