@@ -47,7 +47,8 @@ const REVEAL = [
   '.extras li',
   '.prose > *',
   '.callout',
-  '.footer-grid > *',
+  '.footer-top > *',
+  '.footer-cols > *',
 ].join(',')
 
 export function useReveal(pathname) {

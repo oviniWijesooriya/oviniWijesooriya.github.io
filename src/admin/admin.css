@@ -186,6 +186,15 @@ code { overflow-wrap: anywhere; font-size: 13px; padding: 1px 6px; border-radius
 .a-photo:disabled { cursor: default; }
 .is-selected .a-photo { border-color: var(--leaf); box-shadow: 0 0 0 3px rgba(46, 107, 78, 0.25); }
 .a-new { font-weight: 700; font-style: normal; color: var(--leaf); }
+.a-photo-links { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.a-face { width: min(92vw, 760px); max-height: 92vh; padding: 0; border: 0; border-radius: 16px; background: var(--a-card); color: inherit; }
+.a-face::backdrop { background: rgba(15, 36, 30, 0.7); }
+.a-face-body { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 18px; }
+.a-face-body p { margin: 0; }
+.a-face-frame { position: relative; align-self: center; max-width: 100%; padding: 0; border: 0; background: none; cursor: crosshair; }
+.a-face-frame img { display: block; max-width: 100%; max-height: 62vh; border-radius: 10px; }
+.a-face-mark { position: absolute; width: 38px; height: 38px; border: 3px solid var(--gold); border-radius: 50%; translate: -50% -50%; box-shadow: 0 0 0 2px var(--ink), inset 0 0 0 2px var(--ink); pointer-events: none; }
+.a-face-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .a-photo-tools { position: sticky; top: var(--a-top); z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 0; background: var(--a-card); }
 .a-photo-tools .a-btn { min-height: 38px; padding: 4px 14px; font-size: 14px; }
 .a-portrait { width: 100%; max-width: 280px; aspect-ratio: 4 / 5; object-fit: cover; object-position: center top; border-radius: 14px; background: var(--mist); }

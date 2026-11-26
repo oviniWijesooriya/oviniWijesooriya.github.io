@@ -9,7 +9,7 @@ const strings = (key, label) => ({ key, label, type: 'strings' })
 const objects = (key, label, fields) => ({ key, label, type: 'objects', fields })
 
 const heading = text('heading', 'Heading')
-const focus = select('focus', 'Part of the photo to keep in view', [['', 'Middle'], ['top', 'Top'], ['lower', 'Lower']])
+const focus = select('focus', 'Part of the photo to keep in view', [['', 'The faces'], ['top', 'Top'], ['lower', 'Lower']])
 const link = [text('linkLabel', 'Link text'), text('linkHref', 'Link address')]
 const buttonStyles = [
   ['dark', 'Dark'],

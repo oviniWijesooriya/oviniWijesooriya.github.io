@@ -139,7 +139,19 @@ export default function AdminApp() {
     }
   }
 
-  const photoProps = { drive, manifest, fail, onChanged: syncDrive, openSettings: () => go('drive') }
+  /** Where the face is in one photo, as percentages across and down; null removes the point. */
+  const saveFace = (key, point) => {
+    const { [key]: _previous, ...rest } = content?.faces || {}
+    const faces = point ? { ...rest, [key]: point } : rest
+    const lines = Object.keys(faces).sort().map((k) => `  ${JSON.stringify(k)}: [${faces[k].join(', ')}]`)
+    return save(
+      'Set the face point of a photo',
+      [{ path: 'src/content/faces.json', text: `{\n${lines.join(',\n')}\n}\n` }],
+      content.facesSha ? { 'src/content/faces.json': content.facesSha } : {},
+    )
+  }
+
+  const photoProps = { drive, manifest, fail, onChanged: syncDrive, openSettings: () => go('drive'), faces: content?.faces || {}, saveFace, saving: busy }
 
   const saveOrder = (kind) => (slugs) =>
     save(

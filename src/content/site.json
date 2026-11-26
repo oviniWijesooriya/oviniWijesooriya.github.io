@@ -139,28 +139,28 @@
               "title": "Alfred Baur Gold Medal",
               "sub": "Most Outstanding Emerging Researcher",
               "photo": "faurs-2026/drive:TYAriQ",
-              "focus": "lower"
+              "focus": ""
             },
             {
               "tag": "Best",
               "title": "Best Presenter",
               "sub": "Theme: Technological Interventions and Applications in Agriculture",
               "photo": "faurs-2026/drive:bRZW_2",
-              "focus": "lower"
+              "focus": ""
             },
             {
               "tag": "1st",
               "title": "Scientific Eye Photography",
               "sub": "Winner. The photo is featured on the cover of Hanthana Blossoms magazine.",
               "photo": "faurs-2026/drive:fLxJsh",
-              "focus": "lower"
+              "focus": ""
             },
             {
               "tag": "2nd",
               "title": "Research Briefs (Sinhala)",
               "sub": "1st Runner-up. The brief was selected for publication in Hanthana Blossoms.",
               "photo": "faurs-2026/drive:QgS9Kb",
-              "focus": "lower"
+              "focus": ""
             }
           ]
         },
@@ -398,7 +398,7 @@
           "heading": "Alfred Baur Gold Medal, FAuRS 2026",
           "text": "Most Outstanding Emerging Researcher. Sponsored by Baurs Advisory at the Faculty of Agriculture Undergraduate Research Symposium, University of Peradeniya.",
           "photo": "faurs-2026/drive:28_gzx",
-          "focus": "lower",
+          "focus": "",
           "seal": "Most Outstanding Emerging Researcher",
           "items": [
             {
@@ -438,21 +438,21 @@
                   "title": "Best Presenter — Technological Interventions & Applications in Agriculture",
                   "org": "FAuRS 2026 · Faculty of Agriculture, University of Peradeniya",
                   "photo": "faurs-2026/drive:bRZW_2",
-                  "focus": "lower"
+                  "focus": ""
                 },
                 {
                   "badge": "Winner",
                   "title": "Scientific Eye Photography Competition",
                   "org": "FAuRS 2026 · Photo featured on the cover of Hanthana Blossoms",
                   "photo": "faurs-2026/drive:fLxJsh",
-                  "focus": "lower"
+                  "focus": ""
                 },
                 {
                   "badge": "1st Runner-up",
                   "title": "Research Briefs (Sinhala) Competition",
                   "org": "FAuRS 2026 · Brief published in Hanthana Blossoms",
                   "photo": "faurs-2026/drive:QgS9Kb",
-                  "focus": "lower"
+                  "focus": ""
                 }
               ]
             },

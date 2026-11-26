@@ -1,4 +1,5 @@
 import { marked } from 'marked'
+import faces from '../content/faces.json'
 import order from '../content/order.json'
 import { applyOrder, byNewest, toBlogPost, toEvent } from './frontmatter'
 
@@ -16,6 +17,16 @@ const eventSlugOf = (path) => path.split('/').slice(-2)[0]
 
 export const renderMarkdown = (md) => marked.parse(md)
 
+/**
+ * CSS object-position that keeps the faces in view however a photo is cropped. faces.json holds the
+ * point (percent across, percent down) per photo. It leans a little past the point, so that tight
+ * crops put the face nearer their middle. Photos without a point keep the upper part, where faces usually are.
+ */
+function facePosition(name) {
+  const point = faces[name.match(/^drive-.*-([\w-]{6})\.\w+$/)?.[1] || name]
+  return point ? point.map((v) => `${Math.round(Math.min(100, Math.max(0, 50 + (v - 50) * 1.4)))}%`).join(' ') : '50% 30%'
+}
+
 /** Groups image URLs by the folder they sit in, pairing each with its thumbnail. */
 function groupPhotos(images, thumbs) {
   const bySlug = {}
@@ -23,7 +34,7 @@ function groupPhotos(images, thumbs) {
     const slug = path.split('/').slice(-2)[0]
     const name = path.split('/').pop()
     const thumb = thumbs[path.replace(/([^/]+)$/, 'thumbs/$1')] || url
-    ;(bySlug[slug] ||= []).push({ src: url, thumb, name })
+    ;(bySlug[slug] ||= []).push({ src: url, thumb, name, position: facePosition(name) })
   }
   Object.values(bySlug).forEach((list) => list.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })))
   return bySlug
@@ -34,7 +45,7 @@ const named = (key) => (key.startsWith('drive:') ? (p) => p.name.includes(`-${ke
 
 function withCover(item, photos = []) {
   const chosen = (item.cover && photos.find(named(item.cover))) || photos[0]
-  return { ...item, photos, cover: chosen?.src || '', coverThumb: chosen?.thumb || '' }
+  return { ...item, photos, cover: chosen?.src || '', coverThumb: chosen?.thumb || '', coverPosition: chosen?.position }
 }
 
 const eventPhotos = groupPhotos(imageFiles, thumbFiles)
@@ -59,7 +70,10 @@ export const getEvent = (slug) => events.find((e) => e.slug === slug)
 export const postsForEvent = (slug) => posts.filter((p) => p.event === slug)
 
 /** CSS object-position for the "part of the photo to keep in view" setting. */
-export const FOCUS = { top: '50% 15%', lower: '50% 70%' }
+const FOCUS = { top: '50% 15%', lower: '50% 70%' }
+
+/** The part chosen in the dashboard, or else the faces. */
+export const photoPosition = (photo, focus) => FOCUS[focus] || photo?.position
 
 /** A photo picked inside a page section, written as `<event>/<photo>`. */
 export function findPhoto(ref = '') {

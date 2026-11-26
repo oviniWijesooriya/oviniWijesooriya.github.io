@@ -2,7 +2,7 @@
 // to right, and each stretch of scrolling brings the next year's cards in. Very short screens and
 // visitors who prefer reduced motion get every year listed one after another instead.
 import { useEffect, useRef, useState } from 'react'
-import { FOCUS, findPhoto } from '../lib/content'
+import { findPhoto, photoPosition } from '../lib/content'
 import { scrollToY } from '../lib/motion'
 import ScrollRow from './ScrollRow'
 
@@ -31,7 +31,7 @@ function Card({ item }) {
     <li className="win-card">
       {photo ? (
         <figure className="win-media">
-          <img src={photo.thumb} style={{ objectPosition: FOCUS[item.focus] }} alt={item.title} loading="lazy" decoding="async" draggable="false" />
+          <img src={photo.thumb} style={{ objectPosition: photoPosition(photo, item.focus) }} alt={item.title} loading="lazy" decoding="async" draggable="false" />
           {item.badge && <span className="tag-chip">{item.badge}</span>}
         </figure>
       ) : (

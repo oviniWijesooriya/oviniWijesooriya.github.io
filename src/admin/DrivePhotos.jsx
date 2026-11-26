@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Lightbox from '../components/Lightbox'
 import { ConfirmButton } from './Editor'
 import { manifestList, thumbUrl } from './drive'
+import FacePoint from './FacePoint'
 import { resizeImage } from './files'
 import Sortable from './Sortable'
 
@@ -13,11 +14,12 @@ export const coverKey = (file) => `drive:${file.id.slice(-6)}`
  * Photos of one event or post, read from its Google Drive folder.
  * Select to delete or reorder, pick a cover, and upload new ones.
  */
-export default function DrivePhotos({ drive, manifest, path, cover, onCover, onChanged, openSettings, fail }) {
+export default function DrivePhotos({ drive, manifest, path, cover, onCover, onChanged, openSettings, fail, faces, saveFace, saving }) {
   const [files, setFiles] = useState(null)
   const [selected, setSelected] = useState([])
   const [status, setStatus] = useState('')
   const [preview, setPreview] = useState(null)
+  const [marking, setMarking] = useState(null)
 
   const refresh = useCallback(async () => {
     if (!drive) return setFiles(manifestList(manifest, path))
@@ -152,9 +154,14 @@ export default function DrivePhotos({ drive, manifest, path, cover, onCover, onC
                     {file.name}
                     {isCover && <em className="a-new"> Cover</em>}
                   </span>
-                  <button type="button" className="a-link" onClick={() => setPreview(i)}>
-                    View
-                  </button>
+                  <span className="a-photo-links">
+                    <button type="button" className="a-link" onClick={() => setPreview(i)}>
+                      View
+                    </button>
+                    <button type="button" className="a-link" onClick={() => setMarking(file)}>
+                      Face point{faces[file.id.slice(-6)] ? ' ✓' : ''}
+                    </button>
+                  </span>
                 </>
               )
             }}
@@ -166,6 +173,16 @@ export default function DrivePhotos({ drive, manifest, path, cover, onCover, onC
             onClose={() => setPreview(null)}
             onChange={setPreview}
           />
+          {marking && (
+            <FacePoint
+              key={marking.id}
+              file={marking}
+              point={faces[marking.id.slice(-6)]}
+              busy={saving}
+              onSave={(point) => saveFace(marking.id.slice(-6), point)}
+              onClose={() => setMarking(null)}
+            />
+          )}
           {files.length === 0 && <p>No photos yet.</p>}
         </>
       )}

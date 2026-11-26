@@ -347,7 +347,7 @@ function PhotoStrip({ s }) {
         {photos.map((p, i) => (
           <li key={p.src}>
             <button type="button" className="photo" onClick={() => setActive(i)} aria-label={`Open photo ${i + 1} of ${photos.length}`}>
-              <img src={p.thumb} alt={`${event.title}, photo ${i + 1}`} loading="lazy" decoding="async" draggable="false" />
+              <img src={p.thumb} style={{ objectPosition: p.position }} alt={`${event.title}, photo ${i + 1}`} loading="lazy" decoding="async" draggable="false" />
             </button>
           </li>
         ))}

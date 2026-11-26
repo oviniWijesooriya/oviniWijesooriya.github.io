@@ -32,5 +32,8 @@ export async function loadContent(client) {
   const orderFile = files.find((f) => f.path === 'src/content/order.json')
   const order = orderFile ? JSON.parse(await client.text(orderFile.sha)) : { posts: [], events: [] }
 
-  return { posts, events, site, siteSha: siteFile.sha, order, orderSha: orderFile?.sha }
+  const facesFile = files.find((f) => f.path === 'src/content/faces.json')
+  const faces = facesFile ? JSON.parse(await client.text(facesFile.sha)) : {}
+
+  return { posts, events, site, siteSha: siteFile.sha, order, orderSha: orderFile?.sha, faces, facesSha: facesFile?.sha }
 }

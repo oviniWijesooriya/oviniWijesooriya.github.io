@@ -1,6 +1,6 @@
 // The headline award at the top of the achievements page: a gold panel beside its photo, a medal seal
 // on the join that turns as the page scrolls, and the other awards along the bottom.
-import { FOCUS, findPhoto } from '../lib/content'
+import { findPhoto, photoPosition } from '../lib/content'
 import SmartLink from './SmartLink'
 
 /** A round medal with the words running round its edge. */
@@ -48,7 +48,7 @@ export default function FeaturedAward({ s, link }) {
         <div className="feat-media">
           {photo && (
             <figure className="feat-photo">
-              <img src={photo.src} style={{ objectPosition: FOCUS[s.focus] }} alt={s.heading} decoding="async" />
+              <img src={photo.src} style={{ objectPosition: photoPosition(photo, s.focus) }} alt={s.heading} decoding="async" />
             </figure>
           )}
           <Seal words={s.seal} />

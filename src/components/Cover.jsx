@@ -53,7 +53,7 @@ export default function Cover({ item, className = '', full = false }) {
   return (
     <div className={`cover ${className}`}>
       {item.cover ? (
-        <img src={full ? item.cover : item.coverThumb} alt={item.title} loading="lazy" decoding="async" />
+        <img src={full ? item.cover : item.coverThumb} style={{ objectPosition: item.coverPosition }} alt={item.title} loading="lazy" decoding="async" />
       ) : (
         <CoverArt seed={item.slug} label={yearOf(item.date) || item.title} />
       )}

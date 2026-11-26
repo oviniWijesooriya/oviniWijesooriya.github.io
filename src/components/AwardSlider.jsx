@@ -2,7 +2,7 @@
 // while the visitor scrolls, and each stretch of scrolling moves it on one award (back when scrolling
 // up). Very short screens just list the awards (see CSS).
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FOCUS, findPhoto } from '../lib/content'
+import { findPhoto, photoPosition } from '../lib/content'
 import { PlayPause } from './Rail'
 import SmartLink from './SmartLink'
 
@@ -15,7 +15,7 @@ function Photo({ item }) {
   return (
     <figure className="showcase-photo">
       {photo ? (
-        <img src={photo.src} style={{ objectPosition: FOCUS[item.focus] }} alt={item.title} loading="lazy" decoding="async" draggable="false" />
+        <img src={photo.src} style={{ objectPosition: photoPosition(photo, item.focus) }} alt={item.title} loading="lazy" decoding="async" draggable="false" />
       ) : (
         <span className="showcase-art" aria-hidden="true">
           {item.tag}
@@ -31,7 +31,7 @@ function Backdrop({ items, active }) {
     <div className="showcase-bg" aria-hidden="true">
       {items.map((item, i) => {
         const photo = findPhoto(item.photo)
-        return photo ? <img key={i} className={i === active ? 'is-on' : ''} src={photo.src} style={{ objectPosition: FOCUS[item.focus] }} alt="" loading="lazy" decoding="async" /> : null
+        return photo ? <img key={i} className={i === active ? 'is-on' : ''} src={photo.src} style={{ objectPosition: photoPosition(photo, item.focus) }} alt="" loading="lazy" decoding="async" /> : null
       })}
     </div>
   )
