@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { events, getEvent, getPost, posts } from '../lib/content'
 import site from '../data'
+import { EducationSteps, ExperienceTabs, SkillLabel } from './AboutSections'
 import AwardSlider from './AwardSlider'
 import { EventCard, PostRow } from './Cards'
 import ContactForm from './ContactForm'
@@ -224,63 +225,24 @@ function Projects({ s }) {
   )
 }
 
-function Experience({ s }) {
-  return (
-    <Block s={s}>
-      {list(s.groups).map((g, i) => (
-        <div key={i} className="exp-group">
-          <h3 className="exp-group-title">{g.label}</h3>
-          <ul className="exp-list">
-            {list(g.items).map((it, j) => (
-              <li key={j} className="exp-item">
-                <span className="exp-when">{it.when}</span>
-                <div>
-                  <h4>{it.role}</h4>
-                  <p>{it.org}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </Block>
-  )
-}
+const Experience = ({ s }) => (
+  <Block s={s}>
+    <ExperienceTabs id={s.id} groups={list(s.groups)} />
+  </Block>
+)
 
-function Timeline({ s }) {
-  return (
-    <Block s={s}>
-      <ol className="timeline">
-        {list(s.items).map((e, i) => (
-          <li key={i} className={e.current ? 'is-current' : ''}>
-            <span className="exp-when">{e.when}</span>
-            <h3>{e.title}</h3>
-            <p>{e.place}</p>
-          </li>
-        ))}
-      </ol>
-    </Block>
-  )
-}
+const Timeline = ({ s }) => (
+  <Block s={s}>
+    <EducationSteps items={list(s.items)} />
+  </Block>
+)
 
-function Skills({ s }) {
-  return (
-    <Block s={s} className="skills-block">
-      <div className="skills-grid">
-        {list(s.groups).map((g, i) => (
-          <div key={i}>
-            <h3 className="mini-title">{g.label}</h3>
-            <ul className={g.display === 'chips' ? 'chips' : 'plain-list'}>
-              {list(g.items).map((item, j) => (
-                <li key={j}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </Block>
-  )
-}
+// the heading is printed on the label itself
+const Skills = ({ s }) => (
+  <section id={s.id} className="container block" aria-labelledby={s.heading ? `${s.id}-h` : undefined}>
+    <SkillLabel id={s.id} heading={s.heading} groups={list(s.groups)} />
+  </section>
+)
 
 const Featured = ({ s }) => <FeaturedAward s={s} link={deadPost(s.linkHref) ? '' : s.linkHref} />
 

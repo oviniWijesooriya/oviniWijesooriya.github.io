@@ -51,13 +51,13 @@ export const SECTION_TYPES = {
   featuredAward: { icon: 'star', about: 'One headline award with its photo, and the others along the bottom.', label: 'Featured award', fields: [heading, area('text', 'Description'), photo('photo', 'Photo'), focus, text('seal', 'Words round the medal (keep it short)'), objects('items', 'Other awards', [text('title', 'Award'), area('sub', 'Details')]), ...link] },
   awardYears: { icon: 'star', about: 'A bar of years that moves on as the visitor scrolls, with that year\u2019s award cards.', label: 'Awards by year', fields: [heading, objects('groups', 'Years (left to right on the bar)', [text('label', 'Year or group name'), objects('items', 'Awards', [text('badge', 'Badge'), text('title', 'Award'), text('org', 'Event or organiser'), photo('photo', 'Photo (optional)'), focus])])] },
   projects: { icon: 'cards', about: 'Large project blocks with links.', label: 'Projects', fields: [heading, objects('items', 'Projects', [text('title', 'Title'), text('tag', 'Short label'), area('text', 'Description'), text('href', 'Link (optional)'), text('badge', 'Badge (optional)')]), area('note', 'Note under the projects')] },
-  experience: { icon: 'briefcase', about: 'Roles and organisations, in groups.', label: 'Experience', fields: [heading, objects('groups', 'Groups', [text('label', 'Group name'), objects('items', 'Roles', [text('role', 'Role'), text('org', 'Organisation'), text('when', 'When')])])] },
-  timeline: { icon: 'clock', about: 'A dated line, used for education.', label: 'Timeline (education)', fields: [heading, objects('items', 'Entries', [text('when', 'When'), text('title', 'Title'), text('place', 'Place'), bool('current', 'Current')])] },
+  experience: { icon: 'briefcase', about: 'Roles and organisations. Visitors choose one group at a time.', label: 'Experience', fields: [heading, objects('groups', 'Groups', [text('label', 'Group name'), objects('items', 'Roles', [text('role', 'Role'), text('org', 'Organisation'), text('when', 'When')])])] },
+  timeline: { icon: 'clock', about: 'A staircase of study, oldest step on the left.', label: 'Steps (education)', fields: [heading, objects('items', 'Entries, newest first', [text('when', 'When'), text('title', 'Title'), text('place', 'Place'), bool('current', 'Current')])] },
   skills: {
     icon: 'list',
-    about: 'Columns of skills, certificates or languages.',
-    label: 'Skill columns',
-    fields: [heading, objects('groups', 'Columns', [text('label', 'Column title'), select('display', 'Show as', [['chips', 'Tags'], ['list', 'List']]), strings('items', 'Entries')])],
+    about: 'Skills, certificates and languages, laid out like a food label.',
+    label: 'Skills label',
+    fields: [heading, objects('groups', 'Groups', [text('label', 'Group title'), select('display', 'Show as', [['chips', 'One running line'], ['list', 'Rows (put  \u00b7  before a level)']]), strings('items', 'Entries')])],
   },
 }
 
