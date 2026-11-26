@@ -5,6 +5,7 @@ import { events, getEvent, getPost, posts } from '../lib/content'
 import site from '../data'
 import AwardSlider from './AwardSlider'
 import { EventCard, PostRow } from './Cards'
+import ContactForm from './ContactForm'
 import FeaturedAward from './FeaturedAward'
 import Lightbox from './Lightbox'
 import Prose from './Prose'
@@ -374,6 +375,7 @@ const TYPES = {
   featuredAward: Featured,
   awardYears: YearLine,
   list: List,
+  contactForm: ContactForm,
   ribbons: ({ s }) => (
     <Block s={s}>
       <Ribbons items={list(s.items)} />

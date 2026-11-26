@@ -67,7 +67,7 @@ const postList = () => `<ul>${posts.map((p) => `<li><a href="/blog/${p.slug}/">$
 const eventList = () => `<ul>${events.map((e) => `<li><a href="/gallery/${e.slug}/">${esc(e.title)}</a> (${esc(formatDate(e.date))}): ${esc(e.summary)}</li>`).join('')}</ul>`
 
 // Plain-HTML version of whatever sections a page has, so new sections are readable without JavaScript too.
-const SKIP = new Set(['id', 'type', 'visible', 'href', 'linkHref', 'buttonHref', 'style', 'display', 'count', 'event', 'heading', 'hidePhoto', 'current', 'photo', 'focus', 'seal'])
+const SKIP = new Set(['id', 'type', 'visible', 'href', 'linkHref', 'buttonHref', 'style', 'display', 'count', 'event', 'heading', 'hidePhoto', 'current', 'photo', 'focus', 'seal', 'topics', 'buttonLabel', 'success'])
 function text(value) {
   if (Array.isArray(value)) return value.length ? `<ul>${value.map((v) => `<li>${text(v)}</li>`).join('')}</ul>` : ''
   if (value && typeof value === 'object') return Object.entries(value).filter(([k]) => !SKIP.has(k)).map(([, v]) => text(v)).filter(Boolean).join(' ')
@@ -96,6 +96,7 @@ const fallbacks = {
   achievements: headed('achievements'),
   blog: headed('blog'),
   gallery: headed('gallery'),
+  contact: () => `${headed('contact')().replace('</main>', '')}<p><a href="mailto:${esc(site.contact.email)}">${esc(site.contact.email)}</a></p></main>`,
   post: (p) => wrap(`<article><h1>${esc(p.title)}</h1><p>${esc(formatDate(p.date))} | ${esc(p.category)}</p>${marked.parse(p.body)}</article>`),
   event: (e) =>
     wrap(`<h1>${esc(e.title)}</h1><p>${esc(formatDate(e.date))}${e.place ? ` | ${esc(e.place)}` : ''}</p><p>${esc(e.summary)}</p>${marked.parse(e.body)}`),
@@ -121,6 +122,7 @@ const pages = [
   ['achievements', undefined],
   ['blog', undefined],
   ['gallery', undefined],
+  ['contact', undefined],
   ...posts.map((p) => ['post', p]),
   ...events.map((e) => ['event', e]),
 ]
@@ -144,6 +146,7 @@ const urls = [
   ['/achievements/', today, '0.8'],
   ['/blog/', today, '0.9'],
   ['/gallery/', today, '0.8'],
+  ['/contact/', today, '0.6'],
   ...posts.map((p) => [`/blog/${p.slug}/`, lastmod(p.date), '0.7']),
   ...events.map((e) => [`/gallery/${e.slug}/`, lastmod(e.date), '0.6']),
 ]
@@ -159,7 +162,7 @@ const llmsPath = join(root, 'public/llms.txt')
 const base = readFileSync(llmsPath, 'utf8').split('## Pages')[0].trimEnd()
 writeFileSync(
   join(dist, 'llms.txt'),
-  `${base}\n\n## Pages\n- [Home](${SITE}/): introduction, latest posts and event galleries.\n- [About](${SITE}/about/): education, experience, research and projects.\n- [Achievements](${SITE}/achievements/): awards year by year.\n- [Journal](${SITE}/blog/): posts about events attended and what was achieved.\n- [Gallery](${SITE}/gallery/): one photo gallery per event.\n\n## Journal posts\n${posts
+  `${base}\n\n## Pages\n- [Home](${SITE}/): introduction, latest posts and event galleries.\n- [About](${SITE}/about/): education, experience, research and projects.\n- [Achievements](${SITE}/achievements/): awards year by year.\n- [Journal](${SITE}/blog/): posts about events attended and what was achieved.\n- [Gallery](${SITE}/gallery/): one photo gallery per event.\n- [Contact](${SITE}/contact/): send a message.\n\n## Journal posts\n${posts
     .map((p) => `- [${p.title}](${SITE}/blog/${p.slug}/): ${p.summary}`)
     .join('\n')}\n\n## Event galleries\n${events.map((e) => `- [${e.title}](${SITE}/gallery/${e.slug}/): ${e.summary}`).join('\n')}\n`,
 )

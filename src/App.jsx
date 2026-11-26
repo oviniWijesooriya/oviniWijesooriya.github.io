@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import About from './pages/About'
 import Achievements from './pages/Achievements'
 import Blog from './pages/Blog'
+import Contact from './pages/Contact'
 import Event from './pages/Event'
 import Gallery from './pages/Gallery'
 import Home from './pages/Home'
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="blog/:slug" element={<Post />} />
         <Route path="gallery" element={<Gallery />} />
         <Route path="gallery/:slug" element={<Event />} />
+        <Route path="contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

@@ -22,7 +22,7 @@ export default function Overview({ content, manifest, connected, busy, openPost,
     { icon: 'post', label: 'Write a post', run: () => openPost('') },
     { icon: 'image', label: 'Add an event', run: () => openEvent('') },
     { icon: 'pages', label: 'Edit the home page', run: () => openPage('home') },
-    { icon: 'user', label: 'Contact and portrait', run: () => openPage('contact') },
+    { icon: 'user', label: 'Contact and portrait', run: () => openPage('details') },
   ]
 
   return (

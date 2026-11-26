@@ -38,6 +38,7 @@ export const SECTION_TYPES = {
   text: { icon: 'text', about: 'A heading with free text, lists and links.', label: 'Text', fields: [heading, area('body', 'Text (Markdown: **bold**, - lists, [links](https://…))', { rows: 8 })] },
   cards: { icon: 'cards', about: 'A row of cards, each with a title, text and link.', label: 'Cards', fields: [heading, objects('items', 'Cards', [text('title', 'Title'), area('text', 'Text'), text('href', 'Link address (optional)'), text('linkLabel', 'Link text')])] },
   list: { icon: 'list', about: 'A heading with short lines underneath.', label: 'Simple list', fields: [heading, strings('items', 'Lines')] },
+  contactForm: { icon: 'post', about: 'A message form with your contact details beside it. Messages are emailed to the address in Contact details.', label: 'Contact form', fields: [heading, strings('topics', 'Topics to choose from'), text('buttonLabel', 'Button text'), area('success', 'Message shown after sending')] },
   ribbons: { icon: 'flag', about: 'Short honours hung side by side as ribbons.', label: 'Ribbons', fields: [heading, objects('items', 'Ribbons', [text('title', 'Short title'), area('text', 'Details')])] },
   callout: { icon: 'flag', about: 'A dark banner with a message and a button.', label: 'Banner with button', fields: [heading, area('text', 'Text'), text('buttonLabel', 'Button text'), text('buttonHref', 'Button address')] },
   facts: { icon: 'list', about: 'Labelled rows, such as Studying or Building.', label: 'Facts table', fields: [heading, objects('items', 'Rows', [text('k', 'Label'), area('v', 'Text'), text('href', 'Link (optional)')])] },
@@ -75,6 +76,7 @@ export const PAGES = [
   { id: 'achievements', label: 'Achievements', header: true },
   { id: 'blog', label: 'Journal page', header: true },
   { id: 'gallery', label: 'Gallery page', header: true },
+  { id: 'contact', label: 'Contact page', header: true },
 ]
 
 export const PAGE_HEADER = [text('title', 'Page title'), area('lede', 'Line under the title')]
@@ -91,7 +93,7 @@ export const MENU_FIELDS = [
 ]
 
 export const CONTACT_FIELDS = [
-  text('contact.email', 'Email (shown large in the footer)'),
+  text('contact.email', 'Email (shown in the footer; contact form messages are sent here)'),
   text('contact.phone', 'Phone, as shown'),
   text('contact.phoneHref', 'Phone link, e.g. tel:+94770000000'),
   text('contact.linkedin', 'LinkedIn address'),

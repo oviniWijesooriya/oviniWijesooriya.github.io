@@ -49,6 +49,7 @@ const REVEAL = [
   '.callout',
   '.footer-top > *',
   '.footer-cols > *',
+  '.contact > *',
 ].join(',')
 
 export function useReveal(pathname) {

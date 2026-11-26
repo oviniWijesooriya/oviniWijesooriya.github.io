@@ -140,6 +140,11 @@ function defaultMeta(kind, item) {
         ),
       }
     }
+    case 'contact': {
+      const title = 'Contact | Ovini Wijesooriya'
+      const description = 'Send Ovini Wijesooriya a message about research, event compering or working together, or find her email, phone, LinkedIn and Facebook.'
+      return { title, description, path: '/contact/', ogType: 'website', jsonLd: graph(website, person, page('ContactPage', '/contact/', title, description), crumbs([['Home', '/'], ['Contact', '/contact/']])) }
+    }
     case 'admin':
       return { title: 'Site admin | Ovini Wijesooriya', description: 'Private content editor.', path: '/admin/', ogType: 'website', noindex: true, jsonLd: null }
     default:

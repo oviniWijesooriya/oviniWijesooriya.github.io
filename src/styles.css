@@ -661,6 +661,46 @@ html:not(.is-ready) .hero-name span, html:not(.is-ready) .hero-copy > *, html:no
 }
 
 /* ============================================================
+   Contact
+   ============================================================ */
+.contact { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.contact-card { padding: clamp(22px, 4vw, 48px); border-radius: 28px; background: var(--mist); }
+.contact-title { margin-bottom: 24px; font-size: clamp(26px, 3vw, 38px); font-weight: 750; font-stretch: 90%; letter-spacing: -0.035em; line-height: 1.05; }
+.contact form { display: flex; flex-direction: column; gap: 20px; }
+.contact-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 20px; }
+.contact-field { display: flex; flex-direction: column; gap: 8px; font-weight: 650; font-size: 15px; }
+.contact-field input, .contact-field textarea { width: 100%; padding: 13px 16px; border: 2px solid transparent; border-radius: 14px; background: #fbfcf8; color: var(--ink); font: inherit; font-size: 17px; font-weight: 500; transition: border-color 0.2s, box-shadow 0.2s; }
+.contact-field textarea { min-height: 130px; resize: vertical; }
+.contact-field input:focus, .contact-field textarea:focus { outline: none; border-color: var(--leaf); box-shadow: 0 0 0 4px rgba(46, 107, 78, 0.2); }
+.contact-field input:user-invalid, .contact-field textarea:user-invalid { border-color: #a43d22; }
+.contact-topics { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; border: 0; }
+.contact-topics legend { margin-bottom: 10px; padding: 0; font-weight: 650; font-size: 15px; }
+.contact-topics label { position: relative; cursor: pointer; }
+.contact-topics input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.contact-topics span { display: flex; align-items: center; min-height: 44px; padding: 6px 18px; border: 2px solid var(--ink); border-radius: 999px; font-weight: 600; font-size: 15px; transition: background-color 0.2s, color 0.2s; }
+.contact-topics input:checked + span { background: var(--ink); color: var(--chalk); }
+.contact-topics input:focus-visible + span { outline: 3px solid var(--leaf); outline-offset: 3px; }
+.contact-honey { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.contact-error { padding: 14px 16px; border-radius: 14px; background: #f6ded6; color: #6e2412; font-weight: 600; }
+.contact-send { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; }
+.contact-send .btn:disabled { opacity: 0.6; cursor: progress; }
+.contact-send p { flex: 1 1 220px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.contact-sent { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
+.contact-sent p { max-width: 36ch; font-size: 22px; font-weight: 600; line-height: 1.35; }
+.contact-sent svg { width: 84px; height: 84px; fill: var(--ink); stroke: var(--gold); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.contact-sent circle { stroke: none; }
+.contact-sent path { fill: none; stroke-dasharray: 40; animation: contact-tick 0.7s var(--ease) 0.15s both; }
+@keyframes contact-tick { from { stroke-dashoffset: 40; } }
+.contact-aside { padding: clamp(22px, 4vw, 44px); border-radius: 28px 28px 28px 120px; background: var(--ink); color: var(--chalk); }
+.contact-aside dl { display: flex; flex-direction: column; gap: 22px; min-width: 0; padding-bottom: 20px; }
+.contact-aside dt { color: var(--gold); font-weight: 650; font-size: 14px; }
+.contact-aside dd { font-size: clamp(17px, 1.7vw, 22px); font-weight: 650; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.contact-aside a { display: inline-block; padding-block: 4px; text-decoration: none; }
+.contact-aside a:hover { color: var(--gold); text-decoration: underline; }
+.contact-aside :focus-visible { outline-color: var(--gold); }
+@media (max-width: 860px) { .contact { grid-template-columns: minmax(0, 1fr); } .contact-aside { border-radius: 24px 24px 24px 80px; } }
+
+/* ============================================================
    Footer
    ============================================================ */
 .site-footer { position: relative; isolation: isolate; overflow: hidden; margin-top: 40px; padding-top: clamp(36px, 4.5vw, 56px); border-radius: 32px 32px 0 0; background: var(--ink); color: var(--chalk); }

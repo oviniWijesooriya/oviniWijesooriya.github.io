@@ -2,7 +2,7 @@
   "brand": "Ovini",
   "headerButton": {
     "label": "Say hello",
-    "href": "mailto:parindya2109@gmail.com"
+    "href": "/contact/"
   },
   "nav": [
     {
@@ -72,7 +72,7 @@
           "kicker": "Food Science & Technology, University of Peradeniya",
           "firstName": "Ovini",
           "lastName": "Wijesooriya",
-          "lede": "I build tools that help people eat well and waste less, and I lead and speak wherever the work needs a team or a stage.",
+          "lede": "From a mobile health platform to MealBridge, my work helps people eat better and waste less. Away from research, you’ll find me leading a team or holding the microphone.",
           "buttons": [
             {
               "label": "Read the journal",
@@ -382,6 +382,28 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    "contact": {
+      "title": "Say hello",
+      "lede": "A question about my research, an event that needs a compere, or an idea to work on together? Write to me here.",
+      "seoTitle": "",
+      "seoDescription": "",
+      "sections": [
+        {
+          "id": "form",
+          "type": "contactForm",
+          "visible": true,
+          "heading": "Send me a message",
+          "topics": [
+            "Research",
+            "Events and compering",
+            "Collaboration",
+            "Something else"
+          ],
+          "buttonLabel": "Send message",
+          "success": "Thank you. Your message is on its way, and I’ll reply by email."
         }
       ]
     },

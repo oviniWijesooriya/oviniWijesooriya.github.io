@@ -8,8 +8,8 @@ import Sortable from './Sortable'
 import { BackButton, Card, Icon } from './ui'
 
 const SITE_PATH = 'src/content/site.json'
-const TABS = [...PAGES, { id: 'menu', label: 'Menu and footer' }, { id: 'contact', label: 'Contact and portrait' }]
-const URLS = { home: '/', about: '/about/', achievements: '/achievements/', blog: '/blog/', gallery: '/gallery/' }
+const TABS = [...PAGES, { id: 'menu', label: 'Menu and footer' }, { id: 'details', label: 'Contact and portrait' }]
+const URLS = { home: '/', about: '/about/', achievements: '/achievements/', blog: '/blog/', gallery: '/gallery/', contact: '/contact/' }
 
 const sectionName = (s) => s.heading || s.title || (s.type === 'hero' ? `${s.firstName} ${s.lastName}`.trim() : '') || SECTION_TYPES[s.type]?.label || s.type
 
@@ -242,7 +242,7 @@ export default function PagesPanel({ site, sha, events, manifest, tab, setTab, b
         </div>
       )}
 
-      {tab === 'contact' && (
+      {tab === 'details' && (
         <div className="a-two">
           <div>
             <Card title="Contact details">{fields(CONTACT_FIELDS)}</Card>
