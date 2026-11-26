@@ -137,22 +137,30 @@
             {
               "tag": "Gold",
               "title": "Alfred Baur Gold Medal",
-              "sub": "Most Outstanding Emerging Researcher"
+              "sub": "Most Outstanding Emerging Researcher",
+              "photo": "faurs-2026/drive:TYAriQ",
+              "focus": "lower"
             },
             {
               "tag": "Best",
               "title": "Best Presenter",
-              "sub": "Theme: Technological Interventions and Applications in Agriculture"
+              "sub": "Theme: Technological Interventions and Applications in Agriculture",
+              "photo": "faurs-2026/drive:bRZW_2",
+              "focus": "lower"
             },
             {
               "tag": "1st",
               "title": "Scientific Eye Photography",
-              "sub": "Winner. The photo is featured on the cover of Hanthana Blossoms magazine."
+              "sub": "Winner. The photo is featured on the cover of Hanthana Blossoms magazine.",
+              "photo": "faurs-2026/drive:fLxJsh",
+              "focus": "lower"
             },
             {
               "tag": "2nd",
               "title": "Research Briefs (Sinhala)",
-              "sub": "1st Runner-up. The brief was selected for publication in Hanthana Blossoms."
+              "sub": "1st Runner-up. The brief was selected for publication in Hanthana Blossoms.",
+              "photo": "faurs-2026/drive:QgS9Kb",
+              "focus": "lower"
             }
           ]
         },

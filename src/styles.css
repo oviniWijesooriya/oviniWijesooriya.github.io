@@ -63,7 +63,6 @@ main:focus { outline: none; }
   line-height: 1.05;
   letter-spacing: -0.03em;
 }
-.section-title.on-dark { color: var(--chalk); }
 
 .page-head { padding-top: clamp(48px, 8vw, 96px); padding-bottom: 32px; display: flex; flex-direction: column; gap: 20px; align-items: flex-start; }
 .page-title {
@@ -259,21 +258,81 @@ html:not(.is-ready) .hero-name span, html:not(.is-ready) .hero-copy > *, html:no
 .result-count { margin-bottom: 18px; font-size: 14px; color: var(--muted); }
 
 /* ============================================================
-   Award band
+   Award slider
    ============================================================ */
-.award-band { background: var(--ink); color: var(--chalk); padding-block: clamp(64px, 9vw, 112px); }
-.award-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(32px, 6vw, 88px); align-items: start; }
-.award-grid > div:first-child { display: flex; flex-direction: column; gap: 22px; align-items: flex-start; position: sticky; top: 112px; }
-.award-lede { max-width: 36ch; color: #c5d3c9; font-size: 19px; }
-.award-list li { display: grid; grid-template-columns: 96px 1fr; gap: 20px; align-items: baseline; padding: 22px 0; border-top: 1px solid rgba(241, 243, 234, 0.2); }
-.award-list li:last-child { border-bottom: 1px solid rgba(241, 243, 234, 0.2); }
-.award-rank { font-size: 34px; font-weight: 750; letter-spacing: -0.04em; color: var(--gold); line-height: 1; }
-.award-list h3 { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.2; }
-.award-list p { margin-top: 4px; color: #c5d3c9; font-size: 16px; }
-@media (max-width: 880px) {
-  .award-grid { grid-template-columns: 1fr; }
-  .award-grid > div:first-child { position: static; }
-  .award-list li { grid-template-columns: 76px 1fr; }
+.showcase-section .block-head { align-items: flex-end; }
+.showcase-lede { max-width: 62ch; margin-top: 12px; color: var(--muted); font-size: 18px; }
+.showcase {
+  --card-w: 224px; --card-gap: 20px;
+  position: relative; isolation: isolate; overflow: hidden;
+  display: grid; grid-template-columns: 56px minmax(0, 0.9fr) minmax(0, 1.1fr);
+  min-height: 540px; padding-left: 20px; border-radius: 32px;
+  background: var(--ink); color: var(--chalk);
+  box-shadow: 0 44px 60px -42px rgba(15, 36, 30, 0.75);
+  touch-action: pan-y; user-select: none;
+}
+.showcase.is-single { grid-template-columns: minmax(0, 1fr); padding-left: 0; }
+
+.showcase-bg, .showcase-bg::after, .showcase-shot { position: absolute; inset: 0; }
+.showcase-bg { z-index: -1; }
+.showcase-bg::after {
+  content: '';
+  background: linear-gradient(90deg, rgba(15, 36, 30, 0.94) 0%, rgba(15, 36, 30, 0.82) 40%, rgba(15, 36, 30, 0.55) 100%);
+}
+.showcase-shot { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); opacity: 0; transform: scale(1.08); transition: opacity 0.8s var(--ease), transform 6s linear; }
+.showcase-shot.is-on { opacity: 1; transform: scale(1); }
+.showcase-art { display: grid; place-items: center; background: linear-gradient(150deg, var(--leaf), var(--ink)); color: var(--gold); font-weight: 750; letter-spacing: -0.04em; }
+.showcase-shot.showcase-art { font-size: 0; }
+
+/* the line of dots down the left side */
+.showcase-dots { position: relative; display: flex; flex-direction: column; justify-content: space-between; align-items: center; margin-block: 72px; }
+.showcase-dots::before { content: ''; position: absolute; top: 16px; bottom: 16px; left: 50%; width: 1px; background: rgba(241, 243, 234, 0.28); }
+.showcase-dots button { position: relative; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.showcase-dots span { display: grid; place-items: center; width: 7px; height: 7px; border-radius: 50%; background: rgba(241, 243, 234, 0.6); color: transparent; font-size: 12px; font-weight: 750; transition: width 0.3s var(--ease), height 0.3s var(--ease), background-color 0.3s; }
+.showcase-dots button:hover span { background: var(--chalk); }
+.showcase-dots [aria-current] span { width: 24px; height: 24px; background: var(--gold); color: var(--ink); }
+.showcase :focus-visible { outline-color: var(--gold); }
+
+.showcase-main { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 28px; min-width: 0; padding: 48px 32px 48px 28px; }
+.is-single .showcase-main { padding: 56px clamp(24px, 6vw, 72px); }
+/* all the texts share one cell, so the panel keeps the height of the longest */
+.showcase-copy { display: grid; }
+.showcase-copy > div { grid-area: 1 / 1; align-self: end; visibility: hidden; opacity: 0; transform: translateY(18px); transition: opacity 0.3s, transform 0.3s var(--ease), visibility 0s 0.3s; }
+.showcase-copy > div.is-on { visibility: visible; opacity: 1; transform: none; transition: opacity 0.5s 0.25s, transform 0.6s 0.25s var(--ease), visibility 0s; }
+.showcase-rank { margin-bottom: 10px; color: var(--gold); font-size: 30px; font-weight: 750; letter-spacing: -0.03em; line-height: 1; }
+.showcase-copy h3 { font-size: clamp(32px, 3.6vw, 52px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.05; text-wrap: balance; }
+.showcase-copy h3 + p { max-width: 40ch; margin-top: 14px; color: #d3ded6; font-size: 18px; }
+
+/* the queue: the chosen award stands tallest, the rest wait to its right */
+.showcase-cards { position: relative; min-width: 0; }
+.showcase-cards li {
+  position: absolute; top: 50%; left: 0; width: var(--card-w); height: 288px;
+  transform: translate(calc(var(--place) * (var(--card-w) + var(--card-gap))), -50%);
+  transition: transform 0.7s var(--ease), height 0.7s var(--ease), opacity 0.45s, visibility 0s;
+  animation: showcase-in 0.7s var(--ease);
+}
+.showcase-cards li.is-first { height: 356px; }
+.showcase-cards li.is-gone { visibility: hidden; opacity: 0; pointer-events: none; transition: transform 0.7s var(--ease), height 0.7s var(--ease), opacity 0.45s, visibility 0s 0.7s; }
+@keyframes showcase-in { from { opacity: 0; } }
+.showcase-cards button { position: relative; display: block; width: 100%; height: 100%; padding: 0; overflow: hidden; border: 0; border-radius: 18px 18px 18px 52px; background: var(--ink); color: var(--chalk); text-align: left; cursor: pointer; box-shadow: 0 28px 36px -22px rgba(0, 0, 0, 0.8); }
+.showcase-thumb { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s var(--ease); }
+.showcase-cards .showcase-art { font-size: 44px; }
+.showcase-cards button:hover .showcase-thumb { transform: scale(1.06); }
+.showcase-cards button > span:last-child { position: absolute; inset: auto 0 0 0; display: flex; flex-direction: column; gap: 2px; padding: 56px 18px 18px 22px; background: linear-gradient(transparent, rgba(15, 36, 30, 0.94)); }
+.showcase-cards small { color: var(--gold); font-size: 14px; font-weight: 750; }
+.showcase-cards strong { font-size: 16px; font-weight: 650; line-height: 1.2; }
+
+@media (max-width: 960px) {
+  .showcase { --card-w: 150px; --card-gap: 12px; grid-template-columns: minmax(0, 1fr); padding-left: 0; border-radius: 24px; }
+  .showcase-main { order: 1; gap: 20px; padding: 32px 22px 8px; }
+  .showcase-bg::after { background: linear-gradient(180deg, rgba(15, 36, 30, 0.72) 0%, rgba(15, 36, 30, 0.9) 45%, rgba(15, 36, 30, 0.94) 100%); }
+  .showcase-cards { order: 2; height: 244px; margin-left: 22px; }
+  .showcase-cards li { height: 188px; }
+  .showcase-cards li.is-first { height: 224px; }
+  .showcase-cards strong { font-size: 14px; }
+  .showcase-cards button > span:last-child { padding: 40px 12px 14px 16px; }
+  .showcase-dots { order: 3; flex-direction: row; justify-content: center; gap: 4px; margin: 4px 0 16px; }
+  .showcase-dots::before { display: none; }
 }
 
 /* ============================================================
@@ -577,8 +636,7 @@ html[data-scrolled] .site-header { box-shadow: 0 12px 28px -22px rgba(15, 36, 30
 .event-card:hover .cover { border-radius: 22px 80px 22px 22px; box-shadow: 0 24px 36px -26px rgba(15, 36, 30, 0.75); }
 .project { transition: transform 0.45s var(--ease), box-shadow 0.45s; }
 .project:hover { transform: translateY(-6px); box-shadow: 0 28px 44px -30px rgba(15, 36, 30, 0.8); }
-.award-list li, .win-item, .exp-item, .now-row { transition: padding-left 0.35s var(--ease), background-color 0.3s; }
-.award-list li:hover { padding-left: 14px; background: rgba(241, 243, 234, 0.05); }
+.win-item, .exp-item, .now-row { transition: padding-left 0.35s var(--ease), background-color 0.3s; }
 .win-item:hover, .exp-item:hover, .now-row:hover { padding-left: 12px; background: rgba(221, 229, 214, 0.55); }
 .chips li { transition: background-color 0.25s, color 0.25s, transform 0.25s var(--ease); }
 .chips li:hover { background: var(--ink); color: var(--chalk); transform: translateY(-3px); }
@@ -659,7 +717,7 @@ html:has(dialog[open]) { overflow: hidden; }
   .event-card:hover, .project:hover, .btn:hover { transform: none; }
 }
 .text-link, .back-link { display: inline-block; padding-block: 6px; }
-h1, h2, h3, h4, .page-lede, .post-row-main p, .now-row dd, .award-list h3 { overflow-wrap: break-word; }
+h1, h2, h3, h4, .page-lede, .post-row-main p, .now-row dd, .showcase-copy h3 { overflow-wrap: break-word; }
 .hero-copy, .page-head > *, .page-head-split > div { min-width: 0; }
 
 /* ============================================================

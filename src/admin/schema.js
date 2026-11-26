@@ -4,6 +4,7 @@ const text = (key, label, extra = {}) => ({ key, label, type: 'text', ...extra }
 const area = (key, label, extra = {}) => ({ key, label, type: 'textarea', ...extra })
 const bool = (key, label) => ({ key, label, type: 'bool' })
 const select = (key, label, options) => ({ key, label, type: 'select', options })
+const photo = (key, label) => ({ key, label, type: 'photo' })
 const strings = (key, label) => ({ key, label, type: 'strings' })
 const objects = (key, label, fields) => ({ key, label, type: 'objects', fields })
 
@@ -43,7 +44,7 @@ export const SECTION_TYPES = {
   photoStrip: { icon: 'photos', about: 'A strip of photos from one event.', label: 'Photos from one event', fields: [heading, { key: 'event', label: 'Event', type: 'event' }, text('count', 'How many photos')] },
   postList: { icon: 'post', about: 'Every journal post, with category filters.', label: 'All journal posts', fields: [heading] },
   eventGrid: { icon: 'image', about: 'Every event gallery, with category filters.', label: 'All event galleries', fields: [heading] },
-  awardsBand: { icon: 'star', about: 'A dark band that lists awards with a button.', label: 'Dark awards band', fields: [heading, area('text', 'Text'), ...link, objects('items', 'Awards', [text('tag', 'Short rank, e.g. 1st'), text('title', 'Award'), area('sub', 'Details')])] },
+  awardsBand: { icon: 'star', about: 'A sliding panel of awards, each with its own photo.', label: 'Awards slider', fields: [heading, area('text', 'Text'), ...link, objects('items', 'Awards', [text('tag', 'Short rank, e.g. 1st'), text('title', 'Award'), area('sub', 'Details'), photo('photo', 'Photo'), select('focus', 'Part of the photo to keep in view', [['', 'Middle'], ['top', 'Top'], ['lower', 'Lower']])])] },
   featuredAward: { icon: 'star', about: 'One headline award with the others listed under it.', label: 'Featured award', fields: [heading, area('text', 'Description'), objects('items', 'Other awards', [text('title', 'Award'), area('sub', 'Details')]), ...link] },
   awardYears: { icon: 'star', about: 'Awards grouped by year.', label: 'Awards by year', fields: [heading, objects('groups', 'Years', [text('label', 'Year or group name'), objects('items', 'Awards', [text('badge', 'Badge'), text('title', 'Award'), text('org', 'Event or organiser')])])] },
   projects: { icon: 'cards', about: 'Large project blocks with links.', label: 'Projects', fields: [heading, objects('items', 'Projects', [text('title', 'Title'), text('tag', 'Short label'), area('text', 'Description'), text('href', 'Link (optional)'), text('badge', 'Badge (optional)')]), area('note', 'Note under the projects')] },

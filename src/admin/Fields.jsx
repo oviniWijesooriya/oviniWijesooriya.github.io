@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PhotoField from './PhotoField'
 import { blankValue } from './schema'
 import Sortable from './Sortable'
 
@@ -38,6 +39,8 @@ function ObjectItem({ def, item, onChange, handle, remove, events }) {
 
 /** One form control, driven by a schema entry. Lists can be reordered by dragging. */
 export default function Field({ def, value, onChange, events }) {
+  if (def.type === 'photo') return <PhotoField def={def} value={value} events={events} onChange={onChange} />
+
   if (def.type === 'bool') {
     return (
       <label className="a-check">

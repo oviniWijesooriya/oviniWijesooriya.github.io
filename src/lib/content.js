@@ -29,10 +29,11 @@ function groupPhotos(images, thumbs) {
   return bySlug
 }
 
-/** `cover:` is a file name, or `drive:<id end>` for a photo chosen in the dashboard. */
+/** A photo is named by its file name, or `drive:<id end>` when chosen in the dashboard. */
+const named = (key) => (key.startsWith('drive:') ? (p) => p.name.includes(`-${key.slice(6)}.`) : (p) => p.name === key)
+
 function withCover(item, photos = []) {
-  const wanted = item.cover.startsWith('drive:') ? (p) => p.name.includes(`-${item.cover.slice(6)}.`) : (p) => p.name === item.cover
-  const chosen = (item.cover && photos.find(wanted)) || photos[0]
+  const chosen = (item.cover && photos.find(named(item.cover))) || photos[0]
   return { ...item, photos, cover: chosen?.src || '', coverThumb: chosen?.thumb || '' }
 }
 
@@ -56,3 +57,9 @@ export const events = applyOrder(newestEvents, order.events)
 export const getPost = (slug) => posts.find((p) => p.slug === slug)
 export const getEvent = (slug) => events.find((e) => e.slug === slug)
 export const postsForEvent = (slug) => posts.filter((p) => p.event === slug)
+
+/** A photo picked inside a page section, written as `<event>/<photo>`. */
+export function findPhoto(ref = '') {
+  const [slug, key] = ref.split('/')
+  return key ? getEvent(slug)?.photos.find(named(key)) : undefined
+}

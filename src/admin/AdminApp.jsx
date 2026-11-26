@@ -268,7 +268,7 @@ export default function AdminApp() {
           </div>
           <div hidden={tab !== 'site'}>
             {/* Keyed on the file version: saving a post doesn't wipe unsaved site edits. */}
-            <PagesPanel key={content.siteSha} site={content.site} sha={content.siteSha} events={content.events} tab={section} setTab={setSection} busy={busy} save={save} fail={fail} />
+            <PagesPanel key={content.siteSha} site={content.site} sha={content.siteSha} events={content.events} manifest={manifest} tab={section} setTab={setSection} busy={busy} save={save} fail={fail} />
           </div>
           {tab === 'drive' && (
             <DriveSettings connected={Boolean(drive)} busy={busy} connect={(bridge, password) => updateDrive(password, bridge)} disconnect={(password) => updateDrive(password, null)} />

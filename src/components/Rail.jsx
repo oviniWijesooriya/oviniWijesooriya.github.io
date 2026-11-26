@@ -14,6 +14,25 @@ const PlayPause = ({ playing }) => (
   </svg>
 )
 
+/** Pause, previous and next buttons shared by the sliders. */
+export function RailButtons({ playing, canPlay, onToggle, onStep, atStart, atEnd, name }) {
+  return (
+    <>
+      {canPlay && (
+        <button type="button" className="rail-btn" onClick={onToggle} aria-label={playing ? 'Pause the slider' : 'Play the slider'}>
+          <PlayPause playing={playing} />
+        </button>
+      )}
+      <button type="button" className="rail-btn" onClick={() => onStep(-1)} disabled={atStart} aria-label={`Previous ${name}`}>
+        <Arrow flip />
+      </button>
+      <button type="button" className="rail-btn" onClick={() => onStep(1)} disabled={atEnd} aria-label={`Next ${name}`}>
+        <Arrow />
+      </button>
+    </>
+  )
+}
+
 /** Horizontal carousel: glides slowly while on screen, with arrows, pause, swipe and mouse drag. */
 export default function Rail({ id, title, action, children, auto = true }) {
   const ref = useRef(null)
@@ -54,17 +73,7 @@ export default function Rail({ id, title, action, children, auto = true }) {
         </h2>
         <div className="rail-tools">
           {action}
-          {canMove && (
-            <button type="button" className="rail-btn" onClick={() => setPlaying((p) => !p)} aria-label={playing ? 'Pause the slider' : 'Play the slider'}>
-              <PlayPause playing={playing} />
-            </button>
-          )}
-          <button type="button" className="rail-btn" onClick={() => step(-1)} disabled={at.start} aria-label="Previous events">
-            <Arrow flip />
-          </button>
-          <button type="button" className="rail-btn" onClick={() => step(1)} disabled={at.end} aria-label="Next events">
-            <Arrow />
-          </button>
+          <RailButtons playing={playing} canPlay={canMove} onToggle={() => setPlaying((p) => !p)} onStep={step} atStart={at.start} atEnd={at.end} name="events" />
         </div>
       </div>
       <ul className="rail drag-scroll" ref={ref} onScroll={measure} aria-labelledby={id}>

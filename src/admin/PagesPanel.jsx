@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { ConfirmButton } from './Editor'
 import Field, { getPath, setPath } from './Fields'
+import { PhotoLibrary } from './PhotoField'
 import { resizeImage } from './files'
 import { blankSection, CONTACT_FIELDS, MENU_FIELDS, PAGE_HEADER, PAGE_SEARCH, PAGES, SECTION_TYPES } from './schema'
 import Sortable from './Sortable'
@@ -159,7 +160,7 @@ function PageEditor({ page, value, onChange, events }) {
   )
 }
 
-export default function PagesPanel({ site, sha, events, tab, setTab, busy, save, fail }) {
+export default function PagesPanel({ site, sha, events, manifest, tab, setTab, busy, save, fail }) {
   const [data, setData] = useState(site)
   const [portrait, setPortrait] = useState(null)
   const dirty = Boolean(portrait) || JSON.stringify(data) !== JSON.stringify(site)
@@ -224,7 +225,9 @@ export default function PagesPanel({ site, sha, events, tab, setTab, busy, save,
       </div>
 
       {page && (
-        <PageEditor key={page.id} page={page} events={events} value={data.pages[page.id]} onChange={(v) => setData((d) => ({ ...d, pages: { ...d.pages, [page.id]: v } }))} />
+        <PhotoLibrary.Provider value={manifest}>
+          <PageEditor key={page.id} page={page} events={events} value={data.pages[page.id]} onChange={(v) => setData((d) => ({ ...d, pages: { ...d.pages, [page.id]: v } }))} />
+        </PhotoLibrary.Provider>
       )}
 
       {tab === 'menu' && (

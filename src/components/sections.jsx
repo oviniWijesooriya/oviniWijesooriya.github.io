@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { events, getEvent, getPost, posts } from '../lib/content'
 import site from '../data'
+import AwardSlider from './AwardSlider'
 import { EventCard, PostRow } from './Cards'
 import Lightbox from './Lightbox'
 import Prose from './Prose'
@@ -128,37 +129,6 @@ function LatestPosts({ s }) {
         ))}
       </div>
     </Block>
-  )
-}
-
-function AwardsBand({ s }) {
-  return (
-    <section id={s.id} className="award-band" aria-labelledby={`${s.id}-h`}>
-      <div className="container award-grid">
-        <div>
-          <Heading id={s.id} className="on-dark">
-            {s.heading}
-          </Heading>
-          <p className="award-lede">{s.text}</p>
-          {s.linkHref && s.linkLabel && (
-            <SmartLink className="btn btn-gold" href={s.linkHref}>
-              {s.linkLabel}
-            </SmartLink>
-          )}
-        </div>
-        <ol className="award-list">
-          {list(s.items).map((f, i) => (
-            <li key={i}>
-              <span className="award-rank">{f.tag}</span>
-              <div>
-                <h3>{f.title}</h3>
-                <p>{f.sub}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
   )
 }
 
@@ -444,7 +414,7 @@ const TYPES = {
   intro: Intro,
   facts: Facts,
   latestPosts: LatestPosts,
-  awardsBand: AwardsBand,
+  awardsBand: AwardSlider,
   galleryRail: GalleryRail,
   postList: PostList,
   eventGrid: EventGrid,
