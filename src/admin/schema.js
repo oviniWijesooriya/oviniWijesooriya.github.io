@@ -37,7 +37,7 @@ export const SECTION_TYPES = {
   callout: { label: 'Banner with button', fields: [heading, area('text', 'Text'), text('buttonLabel', 'Button text'), text('buttonHref', 'Button address')] },
   facts: { label: 'Facts table', fields: [heading, objects('items', 'Rows', [text('k', 'Label'), area('v', 'Text'), text('href', 'Link (optional)')])] },
   latestPosts: { label: 'Latest journal posts', fields: [heading, text('linkLabel', 'Link text to the journal'), text('count', 'How many posts')] },
-  galleryRail: { label: 'Event slider', fields: [heading, text('linkLabel', 'Link text to the gallery'), text('count', 'How many events')] },
+  galleryRail: { label: 'Event slider', fields: [heading, text('linkLabel', 'Link text to the gallery'), text('count', 'How many events'), bool('still', 'Keep still (no automatic movement)')] },
   photoStrip: { label: 'Photos from one event', fields: [heading, { key: 'event', label: 'Event', type: 'event' }, text('count', 'How many photos')] },
   postList: { label: 'All journal posts', fields: [heading] },
   eventGrid: { label: 'All event galleries', fields: [heading] },

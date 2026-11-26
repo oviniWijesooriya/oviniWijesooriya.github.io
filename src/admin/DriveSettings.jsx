@@ -3,9 +3,12 @@ import script from '../../docs/drive-bridge.gs?raw'
 import driveConfig from '../content/drive.json'
 
 const randomSecret = () => [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, '0')).join('')
+// Kept for this tab, so reloading or clicking again doesn't replace a secret already pasted into the script.
+const DRAFT = 'ovini-admin-secret-draft'
 
 export default function DriveSettings({ connected, busy, connect, disconnect }) {
-  const [form, setForm] = useState({ url: '', secret: '', password: '' })
+  const [form, setForm] = useState({ url: '', secret: sessionStorage.getItem(DRAFT) || '', password: '' })
+  const [reveal, setReveal] = useState(false)
   const [copied, setCopied] = useState('')
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
@@ -14,10 +17,21 @@ export default function DriveSettings({ connected, busy, connect, disconnect }) 
     setCopied(what)
   }
 
+  /** Copies the secret in the box, making one first if the box is empty (or when asked for a new one). */
+  const useSecret = (fresh) => {
+    const secret = (!fresh && form.secret.trim()) || randomSecret()
+    sessionStorage.setItem(DRAFT, secret)
+    setForm((f) => ({ ...f, secret }))
+    copy(secret, 'secret')
+  }
+
   const submit = async (e) => {
     e.preventDefault()
     const ok = connected ? await disconnect(form.password) : await connect({ url: form.url.trim(), secret: form.secret.trim() }, form.password)
-    if (ok) setForm({ url: '', secret: '', password: '' })
+    if (ok) {
+      sessionStorage.removeItem(DRAFT)
+      setForm({ url: '', secret: '', password: '' })
+    }
   }
 
   return (
@@ -47,17 +61,9 @@ export default function DriveSettings({ connected, busy, connect, disconnect }) 
               </button>
             </li>
             <li>
-              In Project Settings, add a script property named <code>SECRET</code>.{' '}
-              <button
-                type="button"
-                className="a-link"
-                onClick={() => {
-                  const secret = randomSecret()
-                  setForm((f) => ({ ...f, secret }))
-                  copy(secret, 'secret')
-                }}
-              >
-                {copied === 'secret' ? 'New secret copied and filled in below' : 'Make a secret and copy it'}
+              In Project Settings, under Script properties, add a property named <code>SECRET</code>, paste the secret as its value and press <strong>Save script properties</strong>.{' '}
+              <button type="button" className="a-link" onClick={() => useSecret(false)}>
+                {copied === 'secret' ? 'Secret copied' : 'Copy the secret'}
               </button>
             </li>
             <li>Deploy, New deployment, Web app. Execute as “Me”, who has access “Anyone”. Authorise it.</li>
@@ -72,9 +78,20 @@ export default function DriveSettings({ connected, busy, connect, disconnect }) 
                 <input required type="url" value={form.url} onChange={set('url')} />
               </label>
               <label className="a-field">
-                <span>Secret</span>
-                <input required type="password" autoComplete="off" value={form.secret} onChange={set('secret')} />
+                <span>Secret (must be exactly the value of SECRET in the script)</span>
+                <input required type={reveal ? 'text' : 'password'} autoComplete="off" spellCheck="false" value={form.secret} onChange={set('secret')} />
               </label>
+              <div className="a-row-tools">
+                <button type="button" className="a-link" onClick={() => setReveal((r) => !r)}>
+                  {reveal ? 'Hide secret' : 'Show secret'}
+                </button>
+                <button type="button" className="a-link" onClick={() => useSecret(false)}>
+                  Copy
+                </button>
+                <button type="button" className="a-link" onClick={() => useSecret(true)}>
+                  Make a new one (then update the script)
+                </button>
+              </div>
             </>
           )}
           <label className="a-field">

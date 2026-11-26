@@ -165,7 +165,7 @@ function AwardsBand({ s }) {
 function GalleryRail({ s }) {
   return (
     <section id={s.id} className="block">
-      <Rail id={`${s.id}-h`} title={s.heading} action={textLink('/gallery/', s.linkLabel)}>
+      <Rail id={`${s.id}-h`} title={s.heading} action={textLink('/gallery/', s.linkLabel)} auto={!s.still}>
         {events.slice(0, count(s.count, 8)).map((e) => (
           <li key={e.slug}>
             <EventCard event={e} />

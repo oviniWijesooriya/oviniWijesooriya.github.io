@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useAutoScroll } from '../lib/useAutoScroll'
 import { useDragScroll } from '../lib/useDragScroll'
 
 const Arrow = ({ flip }) => (
@@ -7,11 +8,20 @@ const Arrow = ({ flip }) => (
   </svg>
 )
 
-/** Horizontal carousel: no scrollbar, arrow buttons, and swipe on touch screens. */
-export default function Rail({ id, title, action, children }) {
+const PlayPause = ({ playing }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d={playing ? 'M7 5h3.5v14H7zM13.5 5H17v14h-3.5z' : 'M8 5l11 7-11 7z'} />
+  </svg>
+)
+
+/** Horizontal carousel: glides slowly while on screen, with arrows, pause, swipe and mouse drag. */
+export default function Rail({ id, title, action, children, auto = true }) {
   const ref = useRef(null)
-  useDragScroll(ref)
   const [at, setAt] = useState({ start: true, end: false })
+  const [playing, setPlaying] = useState(true)
+  const [canMove] = useState(() => auto && !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  useDragScroll(ref)
+  const hold = useAutoScroll(ref, auto && playing)
 
   const measure = useCallback(() => {
     const el = ref.current
@@ -32,6 +42,7 @@ export default function Rail({ id, title, action, children }) {
     const gap = parseFloat(getComputedStyle(el).columnGap) || 0
     const width = card ? card.getBoundingClientRect().width + gap : el.clientWidth
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    hold()
     el.scrollBy({ left: direction * width, behavior: reduce ? 'auto' : 'smooth' })
   }
 
@@ -43,6 +54,11 @@ export default function Rail({ id, title, action, children }) {
         </h2>
         <div className="rail-tools">
           {action}
+          {canMove && (
+            <button type="button" className="rail-btn" onClick={() => setPlaying((p) => !p)} aria-label={playing ? 'Pause the slider' : 'Play the slider'}>
+              <PlayPause playing={playing} />
+            </button>
+          )}
           <button type="button" className="rail-btn" onClick={() => step(-1)} disabled={at.start} aria-label="Previous events">
             <Arrow flip />
           </button>

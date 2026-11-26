@@ -16,8 +16,9 @@ const IMAGE_TYPES = /^image\/(jpeg|png|webp|heic|heif)$/;
 function doPost(e) {
   try {
     const request = JSON.parse(e.postData.contents);
-    const secret = PropertiesService.getScriptProperties().getProperty('SECRET');
-    if (!secret || request.secret !== secret) return reply({ error: 'Wrong secret key.' });
+    const secret = String(PropertiesService.getScriptProperties().getProperty('SECRET') || '').trim();
+    if (!secret) return reply({ error: 'The script has no SECRET property. Add it under Project Settings, Script properties, and save.' });
+    if (String(request.secret || '').trim() !== secret) return reply({ error: 'Wrong secret key. The SECRET property in the script has a different value.' });
 
     const actions = { ping: ping, list: list, ensure: ensure, upload: upload, rename: rename, trash: trash, trashFolder: trashFolder };
     if (!actions.hasOwnProperty(request.action)) return reply({ error: 'Unknown action.' });

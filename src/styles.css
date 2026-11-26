@@ -297,6 +297,8 @@ html:not(.is-ready) .hero-name span, html:not(.is-ready) .hero-copy > *, html:no
   scroll-padding-inline: max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter)));
 }
 .rail::-webkit-scrollbar { display: none; }
+/* snapping would fight the slow movement */
+.rail.is-auto { scroll-snap-type: none; }
 .rail li { flex: 0 0 min(340px, 78vw); scroll-snap-align: start; }
 .rail-tools { display: flex; align-items: center; gap: 10px; }
 .rail-tools .text-link { margin-right: 14px; }
