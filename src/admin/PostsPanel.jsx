@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { formatDate } from '../lib/frontmatter'
 import DrivePhotos from './DrivePhotos'
 import { ConfirmButton, MarkdownEditor } from './Editor'
 import { slugify, toMarkdownFile } from './files'
-import OrderedList from './OrderedList'
+import Library from './Library'
+import { BackButton, Badge, Card, coverFile, Thumb } from './ui'
 
 const today = () => new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
 const DATE_PATTERN = '\\d{4}(-\\d{2}(-\\d{2})?)?'
@@ -21,7 +21,8 @@ function PostForm({ post, posts, events, busy, save, close, open, photoProps }) 
   }))
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
   const categories = [...new Set(posts.map((p) => p.data.category).filter(Boolean))]
-  const { drive, fail } = photoProps
+  const { drive, fail, manifest } = photoProps
+  const cover = (post && coverFile(manifest, `journal/${post.slug}`, form.cover)) || (form.event ? coverFile(manifest, form.event) : undefined)
 
   const submit = async (e) => {
     e.preventDefault()
@@ -33,11 +34,7 @@ function PostForm({ post, posts, events, busy, save, close, open, photoProps }) 
     }
     const { body, ...meta } = form
     const path = `src/content/posts/${slug}.md`
-    const ok = await save(
-      `${post ? 'Update' : 'Add'} post: ${form.title}`,
-      [{ path, text: toMarkdownFile({ ...post?.data, ...meta }, body) }],
-      { [path]: post?.sha },
-    )
+    const ok = await save(`${post ? 'Update' : 'Add'} post: ${form.title}`, [{ path, text: toMarkdownFile({ ...post?.data, ...meta }, body) }], { [path]: post?.sha })
     if (!ok) return
     if (post) return close()
     // A new post gets its Drive folder, and stays open so photos can be added straight away.
@@ -52,71 +49,86 @@ function PostForm({ post, posts, events, busy, save, close, open, photoProps }) 
   }
 
   return (
-    <form className="a-form" onSubmit={submit}>
-      <div className="a-form-head">
+    <form className="a-editor" onSubmit={submit}>
+      <div className="a-editor-bar">
+        <BackButton onClick={close}>All posts</BackButton>
         <h2>{post ? 'Edit post' : 'New post'}</h2>
-        <button type="button" className="a-link" onClick={close}>
-          Discard and go back
-        </button>
-      </div>
-      <label className="a-field">
-        <span>Title</span>
-        <input required value={form.title} onChange={set('title')} />
-      </label>
-      <div className="a-columns">
-        <label className="a-field">
-          <span>Date (2026, 2026-11 or 2026-11-26)</span>
-          <input required pattern={DATE_PATTERN} value={form.date} onChange={set('date')} />
-        </label>
-        <label className="a-field">
-          <span>Category</span>
-          <input required list="post-categories" value={form.category} onChange={set('category')} />
-          <datalist id="post-categories">
-            {categories.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-        </label>
-        <label className="a-field">
-          <span>Related event gallery</span>
-          <select value={form.event} onChange={set('event')}>
-            <option value="">None</option>
-            {events.map((ev) => (
-              <option key={ev.slug} value={ev.slug}>
-                {ev.data.title}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <label className="a-field">
-        <span>Summary (shown in lists and search results)</span>
-        <textarea required rows={2} value={form.summary} onChange={set('summary')} />
-      </label>
-      <MarkdownEditor label="Post" value={form.body} onChange={(body) => setForm((f) => ({ ...f, body }))} />
-      {post ? (
-        <DrivePhotos {...photoProps} path={`journal/${post.slug}`} cover={form.cover} onCover={(cover) => setForm((f) => ({ ...f, cover }))} />
-      ) : (
-        <p className="a-banner">Save the post first. Its photo folder is then created and you can upload here.</p>
-      )}
-      <label className="a-check">
-        <input type="checkbox" checked={form.draft} onChange={set('draft')} /> Draft: keep it off the website
-      </label>
-      <div className="a-actions">
-        <button type="submit" className="a-btn" disabled={busy}>
-          {busy ? 'Saving…' : form.draft ? 'Save draft' : 'Publish'}
-        </button>
         {post && (
-          <ConfirmButton disabled={busy} confirmLabel={drive ? 'Yes, delete post and move its photos to Drive trash' : 'Yes, delete this post'} onConfirm={remove}>
-            Delete post
-          </ConfirmButton>
+          <a className="a-link" href={`/blog/${post.slug}/`} target="_blank" rel="noreferrer">
+            View on site
+          </a>
         )}
       </div>
+
+      <div className="a-editor-main">
+        <Card>
+          <label className="a-field a-field-title">
+            <span>Title</span>
+            <input required value={form.title} onChange={set('title')} placeholder="What happened?" />
+          </label>
+          <label className="a-field">
+            <span>Summary (shown in lists and search results)</span>
+            <textarea required rows={2} value={form.summary} onChange={set('summary')} />
+          </label>
+          <MarkdownEditor label="Post" value={form.body} onChange={(body) => setForm((f) => ({ ...f, body }))} />
+        </Card>
+        {post ? (
+          <DrivePhotos {...photoProps} path={`journal/${post.slug}`} cover={form.cover} onCover={(c) => setForm((f) => ({ ...f, cover: c }))} />
+        ) : (
+          <p className="a-banner">Save the post first. Its photo folder is then created and you can upload here.</p>
+        )}
+      </div>
+
+      <aside className="a-editor-side">
+        <Card title="Publish" action={<Badge draft={form.draft} />}>
+          <label className="a-check">
+            <input type="checkbox" checked={form.draft} onChange={set('draft')} /> Keep as a draft (hidden from the website)
+          </label>
+          <button type="submit" className="a-btn a-btn-block" disabled={busy}>
+            {busy ? 'Saving…' : form.draft ? 'Save draft' : 'Publish'}
+          </button>
+          {post && (
+            <ConfirmButton disabled={busy} confirmLabel={drive ? 'Yes, delete post and move its photos to Drive trash' : 'Yes, delete this post'} onConfirm={remove}>
+              Delete post
+            </ConfirmButton>
+          )}
+        </Card>
+        <Card title="Details">
+          <label className="a-field">
+            <span>Date (2026, 2026-11 or 2026-11-26)</span>
+            <input required pattern={DATE_PATTERN} value={form.date} onChange={set('date')} />
+          </label>
+          <label className="a-field">
+            <span>Category</span>
+            <input required list="post-categories" value={form.category} onChange={set('category')} />
+            <datalist id="post-categories">
+              {categories.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </label>
+          <label className="a-field">
+            <span>Related event gallery</span>
+            <select value={form.event} onChange={set('event')}>
+              <option value="">None</option>
+              {events.map((ev) => (
+                <option key={ev.slug} value={ev.slug}>
+                  {ev.data.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        </Card>
+        <Card title="Cover">
+          <Thumb file={cover} width={640} className="a-cover" />
+          <p className="a-hint">The post’s own photo, or the related event’s cover.</p>
+        </Card>
+      </aside>
     </form>
   )
 }
 
-export default function PostsPanel({ posts, events, busy, save, editing, setEditing, photoProps, order, saveOrder }) {
+export default function PostsPanel({ posts, events, busy, save, editing, setEditing, photoProps, order, saveOrder, draftsOnly, setDraftsOnly }) {
   if (editing !== null) {
     return (
       <PostForm
@@ -134,24 +146,17 @@ export default function PostsPanel({ posts, events, busy, save, editing, setEdit
   }
 
   return (
-    <>
-      <div className="a-form-head">
-        <h2>Journal posts</h2>
-        <button type="button" className="a-btn" onClick={() => setEditing('')}>
-          Write a post
-        </button>
-      </div>
-      {posts.length === 0 && <p>No posts yet. Write the first one.</p>}
-      <OrderedList items={posts} order={order} busy={busy} saveOrder={saveOrder} open={setEditing}>
-        {(p) => (
-          <>
-            <strong>{p.data.title || p.slug}</strong>
-            <span>{formatDate(p.data.date)}</span>
-            <span>{p.data.category}</span>
-            {p.data.draft === 'true' && <em>Draft</em>}
-          </>
-        )}
-      </OrderedList>
-    </>
+    <Library
+      kind="posts"
+      items={posts}
+      order={order}
+      manifest={photoProps.manifest}
+      busy={busy}
+      saveOrder={saveOrder}
+      open={setEditing}
+      addLabel="Write a post"
+      draftsOnly={draftsOnly}
+      setDraftsOnly={setDraftsOnly}
+    />
   )
 }

@@ -35,17 +35,18 @@ export default function DriveSettings({ connected, busy, connect, disconnect }) 
   }
 
   return (
-    <div className="a-overview">
-      <section className="a-card">
-        <header>
-          <h3>{connected ? 'Google Drive is connected' : 'Connect Google Drive'}</h3>
-          <a className="a-btn a-btn-quiet" href={`https://drive.google.com/drive/folders/${driveConfig.folderId}`} target="_blank" rel="noreferrer">
+    <div className="a-two">
+      <div>
+        <section className="a-card">
+          <header>
+            <h3>{connected ? 'Google Drive is connected' : 'How to connect, once'}</h3>
+          <a className="a-btn a-btn-quiet a-btn-small" href={`https://drive.google.com/drive/folders/${driveConfig.folderId}`} target="_blank" rel="noreferrer">
             Open Drive folder
           </a>
-        </header>
-        {connected ? (
-          <p>You can upload, delete, reorder and choose covers inside each event and post. Deleted photos go to the Drive trash.</p>
-        ) : (
+          </header>
+          {connected ? (
+            <p>You can upload, delete, reorder and choose covers inside each event and post. Deleted photos go to the Drive trash.</p>
+          ) : (
           <ol className="a-steps">
             <li>
               Signed in to the Google account that owns the folder, open{' '}
@@ -69,7 +70,14 @@ export default function DriveSettings({ connected, busy, connect, disconnect }) 
             <li>Deploy, New deployment, Web app. Execute as “Me”, who has access “Anyone”. Authorise it.</li>
             <li>Paste the web app address and the secret below.</li>
           </ol>
-        )}
+          )}
+        </section>
+      </div>
+      <div>
+        <section className="a-card">
+          <header>
+            <h3>{connected ? 'Disconnect' : 'Connection'}</h3>
+          </header>
         <form className="a-form" onSubmit={submit}>
           {!connected && (
             <>
@@ -102,8 +110,9 @@ export default function DriveSettings({ connected, busy, connect, disconnect }) 
             {busy ? 'Please wait…' : connected ? 'Disconnect Drive' : 'Connect'}
           </button>
         </form>
-        <p className="a-hint">The address and secret are stored encrypted in this browser. Anyone who has both can change the photo folder, so keep them private.</p>
-      </section>
+          <p className="a-hint">The address and secret are stored encrypted in this browser. Anyone who has both can change the photo folder, so keep them private.</p>
+        </section>
+      </div>
     </div>
   )
 }

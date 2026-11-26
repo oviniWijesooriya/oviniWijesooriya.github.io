@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { formatDate } from '../lib/frontmatter'
-import { manifestList } from './drive'
 import DrivePhotos from './DrivePhotos'
 import { ConfirmButton, MarkdownEditor } from './Editor'
 import { slugify, toMarkdownFile } from './files'
-import OrderedList from './OrderedList'
+import Library from './Library'
+import { BackButton, Badge, Card, coverFile, Thumb } from './ui'
 
 const DATE_PATTERN = '\\d{4}(-\\d{2}(-\\d{2})?)?'
 
@@ -22,7 +21,7 @@ function EventForm({ event, events, busy, save, close, open, photoProps }) {
   }))
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
   const categories = [...new Set(events.map((e) => e.data.category).filter(Boolean))]
-  const { drive, fail } = photoProps
+  const { drive, fail, manifest } = photoProps
 
   const submit = async (e) => {
     e.preventDefault()
@@ -51,70 +50,85 @@ function EventForm({ event, events, busy, save, close, open, photoProps }) {
   }
 
   return (
-    <form className="a-form" onSubmit={submit}>
-      <div className="a-form-head">
+    <form className="a-editor" onSubmit={submit}>
+      <div className="a-editor-bar">
+        <BackButton onClick={close}>All events</BackButton>
         <h2>{event ? 'Edit event' : 'New event'}</h2>
-        <button type="button" className="a-link" onClick={close}>
-          Discard and go back
-        </button>
-      </div>
-      <label className="a-field">
-        <span>Event name</span>
-        <input required value={form.title} onChange={set('title')} />
-      </label>
-      <div className="a-columns">
-        <label className="a-field">
-          <span>Date (2026, 2026-11 or 2026-11-26)</span>
-          <input pattern={DATE_PATTERN} value={form.date} onChange={set('date')} />
-        </label>
-        <label className="a-field">
-          <span>Category</span>
-          <input required list="event-categories" value={form.category} onChange={set('category')} />
-          <datalist id="event-categories">
-            {categories.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-        </label>
-        <label className="a-field">
-          <span>Place (optional)</span>
-          <input value={form.place} onChange={set('place')} />
-        </label>
-      </div>
-      <label className="a-field">
-        <span>Hosted by (optional)</span>
-        <input value={form.host} onChange={set('host')} />
-      </label>
-      <label className="a-field">
-        <span>Summary</span>
-        <textarea required rows={2} value={form.summary} onChange={set('summary')} />
-      </label>
-
-      {event ? (
-        <DrivePhotos {...photoProps} path={event.slug} cover={form.cover} onCover={(cover) => setForm((f) => ({ ...f, cover }))} />
-      ) : (
-        <p className="a-banner">Save the event first. Its photo folder is then created and you can upload here.</p>
-      )}
-
-      <MarkdownEditor label="About this event" rows={8} value={form.body} onChange={(body) => setForm((f) => ({ ...f, body }))} />
-      <label className="a-check">
-        <input type="checkbox" checked={form.draft} onChange={set('draft')} /> Draft: keep it off the website
-      </label>
-      <div className="a-actions">
-        <button type="submit" className="a-btn" disabled={busy}>
-          {busy ? 'Saving…' : form.draft ? 'Save draft' : 'Publish'}
-        </button>
         {event && (
-          <ConfirmButton disabled={busy} confirmLabel={drive ? 'Yes, delete event and move its photos to Drive trash' : 'Yes, delete event'} onConfirm={remove}>
-            Delete event
-          </ConfirmButton>
+          <a className="a-link" href={`/gallery/${event.slug}/`} target="_blank" rel="noreferrer">
+            View on site
+          </a>
         )}
       </div>
+
+      <div className="a-editor-main">
+        <Card>
+          <label className="a-field a-field-title">
+            <span>Event name</span>
+            <input required value={form.title} onChange={set('title')} />
+          </label>
+          <label className="a-field">
+            <span>Summary</span>
+            <textarea required rows={2} value={form.summary} onChange={set('summary')} />
+          </label>
+          <MarkdownEditor label="About this event" rows={6} value={form.body} onChange={(body) => setForm((f) => ({ ...f, body }))} />
+        </Card>
+        {event ? (
+          <DrivePhotos {...photoProps} path={event.slug} cover={form.cover} onCover={(cover) => setForm((f) => ({ ...f, cover }))} />
+        ) : (
+          <p className="a-banner">Save the event first. Its photo folder is then created and you can upload here.</p>
+        )}
+      </div>
+
+      <aside className="a-editor-side">
+        <Card title="Publish" action={<Badge draft={form.draft} />}>
+          <label className="a-check">
+            <input type="checkbox" checked={form.draft} onChange={set('draft')} /> Keep as a draft (hidden from the website)
+          </label>
+          <button type="submit" className="a-btn a-btn-block" disabled={busy}>
+            {busy ? 'Saving…' : form.draft ? 'Save draft' : 'Publish'}
+          </button>
+          {event && (
+            <ConfirmButton disabled={busy} confirmLabel={drive ? 'Yes, delete event and move its photos to Drive trash' : 'Yes, delete event'} onConfirm={remove}>
+              Delete event
+            </ConfirmButton>
+          )}
+        </Card>
+        <Card title="Details">
+          <label className="a-field">
+            <span>Date (2026, 2026-11 or 2026-11-26)</span>
+            <input pattern={DATE_PATTERN} value={form.date} onChange={set('date')} />
+          </label>
+          <label className="a-field">
+            <span>Category</span>
+            <input required list="event-categories" value={form.category} onChange={set('category')} />
+            <datalist id="event-categories">
+              {categories.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </label>
+          <label className="a-field">
+            <span>Place (optional)</span>
+            <input value={form.place} onChange={set('place')} />
+          </label>
+          <label className="a-field">
+            <span>Hosted by (optional)</span>
+            <input value={form.host} onChange={set('host')} />
+          </label>
+        </Card>
+        {event && (
+          <Card title="Cover">
+            <Thumb file={coverFile(manifest, event.slug, form.cover)} width={640} className="a-cover" />
+            <p className="a-hint">To change it, select a photo and choose “Use as cover”.</p>
+          </Card>
+        )}
+      </aside>
     </form>
   )
 }
 
-export default function EventsPanel({ events, busy, save, editing, setEditing, photoProps, order, saveOrder }) {
+export default function EventsPanel({ events, busy, save, editing, setEditing, photoProps, order, saveOrder, draftsOnly, setDraftsOnly }) {
   if (editing !== null) {
     return (
       <EventForm
@@ -131,28 +145,17 @@ export default function EventsPanel({ events, busy, save, editing, setEditing, p
   }
 
   return (
-    <>
-      <div className="a-form-head">
-        <h2>Event galleries</h2>
-        <button type="button" className="a-btn" onClick={() => setEditing('')}>
-          Add an event
-        </button>
-      </div>
-      <OrderedList items={events} order={order} busy={busy} saveOrder={saveOrder} open={setEditing}>
-        {(e) => {
-          const count = manifestList(photoProps.manifest, e.slug).length
-          return (
-            <>
-              <strong>{e.data.title || e.slug}</strong>
-              <span>{formatDate(e.data.date)}</span>
-              <span>
-                {count} {count === 1 ? 'photo' : 'photos'}
-              </span>
-              {e.data.draft === 'true' && <em>Draft</em>}
-            </>
-          )
-        }}
-      </OrderedList>
-    </>
+    <Library
+      kind="events"
+      items={events}
+      order={order}
+      manifest={photoProps.manifest}
+      busy={busy}
+      saveOrder={saveOrder}
+      open={setEditing}
+      addLabel="Add an event"
+      draftsOnly={draftsOnly}
+      setDraftsOnly={setDraftsOnly}
+    />
   )
 }

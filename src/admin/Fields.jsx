@@ -93,7 +93,7 @@ export default function Field({ def, value, onChange, events }) {
   }
 
   return (
-    <label className="a-field">
+    <label className={`a-field ${def.type === 'textarea' ? 'a-field-wide' : ''}`}>
       <span>{def.label}</span>
       {def.type === 'textarea' ? (
         <textarea rows={def.rows || 3} value={value || ''} onChange={(e) => onChange(e.target.value)} />

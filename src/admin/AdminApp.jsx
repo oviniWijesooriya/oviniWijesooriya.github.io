@@ -13,21 +13,16 @@ import Overview from './Overview'
 import PostsPanel from './PostsPanel'
 import PagesPanel from './PagesPanel'
 import { createAccount, endSession, readSession, startSession, unlock } from './vault'
+import { Icon } from './ui'
 import './admin.css'
 
 const TABS = [
-  ['overview', 'Overview', 'M4 4h7v7H4zM13 4h7v4h-7zM13 11h7v9h-7zM4 14h7v6H4z'],
-  ['posts', 'Journal', 'M5 4h14v16H5zM8 9h8M8 13h8M8 17h5'],
-  ['events', 'Gallery', 'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9.5h.01'],
-  ['site', 'Pages', 'M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4'],
-  ['drive', 'Drive', 'M8.5 4h7l6 10-3.5 6h-12L2.5 14zM8.5 4l6 10M15.5 4l-13 10M6 20l6-6h9.5'],
+  ['overview', 'Overview', 'overview', 'What is on your site, and what to do next.'],
+  ['posts', 'Journal', 'post', 'Write, edit and order your posts.'],
+  ['events', 'Gallery', 'image', 'One gallery for each event, with its photos.'],
+  ['site', 'Pages', 'pages', 'Sections, headings, menu, footer and contact details.'],
+  ['drive', 'Drive', 'drive', 'The Google Drive folder that holds your photos.'],
 ]
-
-const Icon = ({ d }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d={d} />
-  </svg>
-)
 
 export default function AdminApp() {
   useSeo(pageMeta('admin'))
@@ -39,6 +34,8 @@ export default function AdminApp() {
   const [postEditing, setPostEditing] = useState(null) // null = list, '' = new, slug = existing
   const [eventEditing, setEventEditing] = useState(null)
   const [section, setSection] = useState('home')
+  const [postDrafts, setPostDrafts] = useState(false)
+  const [eventDrafts, setEventDrafts] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState(null) // { type: 'ok' | 'error', text }
   const resumed = useRef(false)
@@ -176,12 +173,26 @@ export default function AdminApp() {
     setEventEditing(slug)
     go('events')
   }
+  const openTab = (id) => {
+    if (id === 'posts') setPostEditing(null)
+    if (id === 'events') setEventEditing(null)
+    go(id)
+  }
+  const openPage = (id) => {
+    setSection(id)
+    go('site')
+  }
+  const openDrafts = () => {
+    const inPosts = content.posts.some((p) => p.data.draft === 'true')
+    ;(inPosts ? setPostDrafts : setEventDrafts)(true)
+    openTab(inPosts ? 'posts' : 'events')
+  }
 
   if (!client || !content) {
     return <Login onLogin={login} onSetup={setup} busy={busy} error={notice?.type === 'error' ? notice.text : ''} />
   }
 
-  const title = TABS.find(([id]) => id === tab)[1]
+  const [, title, , subtitle] = TABS.find(([id]) => id === tab)
 
   return (
     <div className="admin">
@@ -197,19 +208,19 @@ export default function AdminApp() {
         <div className="a-side-body" id="a-side-body">
           <nav aria-label="Admin sections">
             {TABS.map(([id, label, icon]) => (
-              <button key={id} type="button" aria-current={tab === id ? 'page' : undefined} onClick={() => go(id)}>
-                <Icon d={icon} />
+              <button key={id} type="button" aria-current={tab === id ? 'page' : undefined} onClick={() => openTab(id)}>
+                <Icon name={icon} />
                 {label}
               </button>
             ))}
           </nav>
           <div className="a-side-foot">
             <Link to="/" target="_blank">
-              <Icon d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" />
+              <Icon name="external" />
               View site
             </Link>
             <button type="button" onClick={logout}>
-              <Icon d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9" />
+              <Icon name="logout" />
               Log out
             </button>
           </div>
@@ -218,22 +229,42 @@ export default function AdminApp() {
 
       <div className="a-content">
         <header className="a-top">
-          <h1>{title}</h1>
-          <p className="a-user">
-            <span aria-hidden="true">{(user || 'A').slice(0, 1).toUpperCase()}</span>
-            {user}
-          </p>
+          <div>
+            <h1>{title}</h1>
+            <p>{subtitle}</p>
+          </div>
+          <div className="a-top-end">
+            <a className="a-btn a-btn-quiet a-btn-small" href="/" target="_blank" rel="noreferrer">
+              <Icon name="external" size={18} />
+              View site
+            </a>
+            <p className="a-user">
+              <span aria-hidden="true">{(user || 'A').slice(0, 1).toUpperCase()}</span>
+              {user}
+            </p>
+          </div>
         </header>
         <main className="a-main">
           {/* Panels stay mounted so unsaved edits survive switching sections. */}
           <div hidden={tab !== 'overview'}>
-            <Overview content={content} manifest={manifest} connected={Boolean(drive)} busy={busy} openPost={openPost} openEvent={openEvent} openDrive={() => go('drive')} syncDrive={syncDrive} />
+            <Overview
+              content={content}
+              manifest={manifest}
+              connected={Boolean(drive)}
+              busy={busy}
+              openPost={openPost}
+              openEvent={openEvent}
+              openTab={openTab}
+              openDrafts={openDrafts}
+              openPage={openPage}
+              syncDrive={syncDrive}
+            />
           </div>
           <div hidden={tab !== 'posts'}>
-            <PostsPanel posts={content.posts} events={content.events} busy={busy} save={save} editing={postEditing} setEditing={setPostEditing} photoProps={photoProps} order={content.order.posts} saveOrder={saveOrder('posts')} />
+            <PostsPanel posts={content.posts} events={content.events} busy={busy} save={save} editing={postEditing} setEditing={setPostEditing} photoProps={photoProps} order={content.order.posts} saveOrder={saveOrder('posts')} draftsOnly={postDrafts} setDraftsOnly={setPostDrafts} />
           </div>
           <div hidden={tab !== 'events'}>
-            <EventsPanel events={content.events} busy={busy} save={save} editing={eventEditing} setEditing={setEventEditing} photoProps={photoProps} order={content.order.events} saveOrder={saveOrder('events')} />
+            <EventsPanel events={content.events} busy={busy} save={save} editing={eventEditing} setEditing={setEventEditing} photoProps={photoProps} order={content.order.events} saveOrder={saveOrder('events')} draftsOnly={eventDrafts} setDraftsOnly={setEventDrafts} />
           </div>
           <div hidden={tab !== 'site'}>
             {/* Keyed on the file version: saving a post doesn't wipe unsaved site edits. */}

@@ -9,14 +9,14 @@ let uid = 0
 function Item({ id, index, wholeItem, disabled, className, children }) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id, disabled })
   const style = { transform: CSS.Translate.toString(transform), transition, zIndex: isDragging ? 5 : undefined }
-  const handle = (
+  const handle = disabled ? null : (
     <button type="button" className="a-handle" ref={setActivatorNodeRef} {...attributes} {...listeners} aria-label={`Drag to reorder item ${index + 1}`}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M9 5a1.6 1.6 0 1 1 0 .01M15 5a1.6 1.6 0 1 1 0 .01M9 12a1.6 1.6 0 1 1 0 .01M15 12a1.6 1.6 0 1 1 0 .01M9 19a1.6 1.6 0 1 1 0 .01M15 19a1.6 1.6 0 1 1 0 .01" />
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+        <path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" />
       </svg>
     </button>
   )
-  // Photo tiles are dragged by the picture itself; rows are dragged by their handle.
+  // Photo tiles are dragged by the picture itself; everything else by its handle.
   const own = wholeItem && !disabled ? { ref: (node) => (setNodeRef(node), setActivatorNodeRef(node)), ...attributes, ...listeners } : { ref: setNodeRef }
   return (
     <li {...own} style={style} className={`${className} ${isDragging ? 'is-moving' : ''}`}>
@@ -28,17 +28,19 @@ function Item({ id, index, wholeItem, disabled, className, children }) {
 /**
  * `items` + `onChange(next)`. `children(item, index, { handle, remove })` renders one entry.
  * Pass `getId` when items have stable ids; otherwise ids are tracked by position.
+ * `grid` lays items out in two directions; add `handleOnly` to drag by the handle instead of the whole tile.
  */
-export default function Sortable({ items, onChange, children, getId, className = '', itemClassName = () => '', grid = false, disabled = false }) {
+export default function Sortable({ items, onChange, children, getId, className = '', itemClassName = () => '', grid = false, handleOnly = false, disabled = false }) {
   const generated = useRef([])
   while (generated.current.length < items.length) generated.current.push(`item-${++uid}`)
   generated.current.length = items.length
   const ids = getId ? items.map(getId) : generated.current
+  const wholeItem = grid && !handleOnly
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    // Grids start a drag after a short press, so a swipe still scrolls the page.
-    useSensor(TouchSensor, { activationConstraint: grid ? { delay: 220, tolerance: 8 } : { distance: 4 } }),
+    // Whole tiles start a drag after a short press, so a swipe still scrolls the page.
+    useSensor(TouchSensor, { activationConstraint: wholeItem ? { delay: 220, tolerance: 8 } : { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
@@ -60,7 +62,7 @@ export default function Sortable({ items, onChange, children, getId, className =
       <SortableContext items={ids} strategy={grid ? rectSortingStrategy : verticalListSortingStrategy}>
         <ul className={className}>
           {items.map((item, index) => (
-            <Item key={ids[index]} id={ids[index]} index={index} wholeItem={grid} disabled={disabled} className={itemClassName(item)}>
+            <Item key={ids[index]} id={ids[index]} index={index} wholeItem={wholeItem} disabled={disabled} className={itemClassName(item)}>
               {(handle) => children(item, index, { handle, remove: () => remove(index) })}
             </Item>
           ))}
