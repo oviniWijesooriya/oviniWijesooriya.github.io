@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { byNewest, formatDate } from '../lib/frontmatter'
+import { formatDate } from '../lib/frontmatter'
 import { manifestList } from './drive'
 import DrivePhotos from './DrivePhotos'
 import { ConfirmButton, MarkdownEditor } from './Editor'
 import { slugify, toMarkdownFile } from './files'
+import OrderedList from './OrderedList'
 
 const DATE_PATTERN = '\\d{4}(-\\d{2}(-\\d{2})?)?'
 
@@ -113,9 +114,7 @@ function EventForm({ event, events, busy, save, close, open, photoProps }) {
   )
 }
 
-export default function EventsPanel({ events, busy, save, editing, setEditing, photoProps }) {
-  const sorted = [...events].sort((a, b) => byNewest({ ...a.data, date: a.data.date || '' }, { ...b.data, date: b.data.date || '' }))
-
+export default function EventsPanel({ events, busy, save, editing, setEditing, photoProps, order, saveOrder }) {
   if (editing !== null) {
     return (
       <EventForm
@@ -139,23 +138,21 @@ export default function EventsPanel({ events, busy, save, editing, setEditing, p
           Add an event
         </button>
       </div>
-      <ul className="a-rows">
-        {sorted.map((e) => {
+      <OrderedList items={events} order={order} busy={busy} saveOrder={saveOrder} open={setEditing}>
+        {(e) => {
           const count = manifestList(photoProps.manifest, e.slug).length
           return (
-            <li key={e.slug}>
-              <button type="button" onClick={() => setEditing(e.slug)}>
-                <strong>{e.data.title || e.slug}</strong>
-                <span>{formatDate(e.data.date)}</span>
-                <span>
-                  {count} {count === 1 ? 'photo' : 'photos'}
-                </span>
-                {e.data.draft === 'true' && <em>Draft</em>}
-              </button>
-            </li>
+            <>
+              <strong>{e.data.title || e.slug}</strong>
+              <span>{formatDate(e.data.date)}</span>
+              <span>
+                {count} {count === 1 ? 'photo' : 'photos'}
+              </span>
+              {e.data.draft === 'true' && <em>Draft</em>}
+            </>
           )
-        })}
-      </ul>
+        }}
+      </OrderedList>
     </>
   )
 }

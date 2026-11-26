@@ -4,16 +4,23 @@ import { scrollToTop } from '../lib/motion'
 /** Appears after the first screen. The ring around it shows how far down the page you are. */
 export default function BackToTop() {
   const [show, setShow] = useState(false)
+  const [down, setDown] = useState(false)
 
   useEffect(() => {
-    const check = () => setShow(window.scrollY > window.innerHeight * 0.6)
+    let last = window.scrollY
+    const check = () => {
+      const y = window.scrollY
+      setShow(y > window.innerHeight * 0.6)
+      if (Math.abs(y - last) > 4) setDown(y > last)
+      last = y
+    }
     check()
     addEventListener('scroll', check, { passive: true })
     return () => removeEventListener('scroll', check)
   }, [])
 
   return (
-    <button type="button" className={`to-top ${show ? 'is-visible' : ''}`} onClick={() => scrollToTop()} aria-label="Back to top" tabIndex={show ? 0 : -1} aria-hidden={!show}>
+    <button type="button" className={`to-top ${show ? 'is-visible' : ''} ${down ? 'going-down' : ''}`} onClick={() => scrollToTop()} aria-label="Back to top" tabIndex={show ? 0 : -1} aria-hidden={!show}>
       <svg className="to-top-ring" viewBox="0 0 52 52" aria-hidden="true">
         <circle cx="26" cy="26" r="24" pathLength="1" />
       </svg>

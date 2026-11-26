@@ -11,7 +11,7 @@ import { loadContent } from './load'
 import Login from './Login'
 import Overview from './Overview'
 import PostsPanel from './PostsPanel'
-import SitePanel from './SitePanel'
+import PagesPanel from './PagesPanel'
 import { createAccount, endSession, readSession, startSession, unlock } from './vault'
 import './admin.css'
 
@@ -19,7 +19,7 @@ const TABS = [
   ['overview', 'Overview', 'M4 4h7v7H4zM13 4h7v4h-7zM13 11h7v9h-7zM4 14h7v6H4z'],
   ['posts', 'Journal', 'M5 4h14v16H5zM8 9h8M8 13h8M8 17h5'],
   ['events', 'Gallery', 'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9.5h.01'],
-  ['site', 'Site details', 'M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4'],
+  ['site', 'Pages', 'M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4'],
   ['drive', 'Drive', 'M8.5 4h7l6 10-3.5 6h-12L2.5 14zM8.5 4l6 10M15.5 4l-13 10M6 20l6-6h9.5'],
 ]
 
@@ -144,6 +144,13 @@ export default function AdminApp() {
 
   const photoProps = { drive, manifest, fail, onChanged: syncDrive, openSettings: () => go('drive') }
 
+  const saveOrder = (kind) => (slugs) =>
+    save(
+      `Reorder ${kind === 'posts' ? 'journal posts' : 'event galleries'}`,
+      [{ path: 'src/content/order.json', text: `${JSON.stringify({ ...content.order, [kind]: slugs }, null, 2)}\n` }],
+      content.orderSha ? { 'src/content/order.json': content.orderSha } : {},
+    )
+
   const logout = () => {
     endSession()
     setClient(null)
@@ -223,14 +230,14 @@ export default function AdminApp() {
             <Overview content={content} manifest={manifest} connected={Boolean(drive)} busy={busy} openPost={openPost} openEvent={openEvent} openDrive={() => go('drive')} syncDrive={syncDrive} />
           </div>
           <div hidden={tab !== 'posts'}>
-            <PostsPanel posts={content.posts} events={content.events} busy={busy} save={save} editing={postEditing} setEditing={setPostEditing} photoProps={photoProps} />
+            <PostsPanel posts={content.posts} events={content.events} busy={busy} save={save} editing={postEditing} setEditing={setPostEditing} photoProps={photoProps} order={content.order.posts} saveOrder={saveOrder('posts')} />
           </div>
           <div hidden={tab !== 'events'}>
-            <EventsPanel events={content.events} busy={busy} save={save} editing={eventEditing} setEditing={setEventEditing} photoProps={photoProps} />
+            <EventsPanel events={content.events} busy={busy} save={save} editing={eventEditing} setEditing={setEventEditing} photoProps={photoProps} order={content.order.events} saveOrder={saveOrder('events')} />
           </div>
           <div hidden={tab !== 'site'}>
             {/* Keyed on the file version: saving a post doesn't wipe unsaved site edits. */}
-            <SitePanel key={content.siteSha} site={content.site} sha={content.siteSha} section={section} setSection={setSection} busy={busy} save={save} fail={fail} />
+            <PagesPanel key={content.siteSha} site={content.site} sha={content.siteSha} events={content.events} tab={section} setTab={setSection} busy={busy} save={save} fail={fail} />
           </div>
           {tab === 'drive' && (
             <DriveSettings connected={Boolean(drive)} busy={busy} connect={(bridge, password) => updateDrive(password, bridge)} disconnect={(password) => updateDrive(password, null)} />

@@ -57,6 +57,13 @@ const page = (type, path, name, description, extra = {}) => ({
 
 /** Builds `{ title, description, path, ogType, jsonLd }` for a page kind. */
 export function pageMeta(kind, item = {}) {
+  const meta = defaultMeta(kind, item)
+  // The dashboard can override a page's search title and description.
+  if (!item.seoTitle && !item.seoDescription) return meta
+  return { ...meta, title: item.seoTitle || meta.title, description: item.seoDescription || meta.description }
+}
+
+function defaultMeta(kind, item) {
   switch (kind) {
     case 'home': {
       const title = 'Ovini Wijesooriya | Food Scientist, Researcher & Student Leader, Sri Lanka'

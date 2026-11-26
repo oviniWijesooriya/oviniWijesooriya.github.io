@@ -6,28 +6,31 @@ import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { marked } from 'marked'
-import { byNewest, formatDate, toBlogPost, toEvent } from '../src/lib/frontmatter.js'
+import { applyOrder, byNewest, formatDate, toBlogPost, toEvent } from '../src/lib/frontmatter.js'
 import { DEFAULT_IMAGE, SITE, pageMeta } from '../src/lib/seo-data.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(root, 'dist')
 const template = readFileSync(join(dist, 'index.html'), 'utf8')
-const { education, faurs, journey, projects, wins } = JSON.parse(readFileSync(join(root, 'src/content/site.json'), 'utf8'))
+const site = JSON.parse(readFileSync(join(root, 'src/content/site.json'), 'utf8'))
+const order = JSON.parse(readFileSync(join(root, 'src/content/order.json'), 'utf8'))
 
 const esc = (s = '') => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 // ---- content ----
-const posts = readdirSync(join(root, 'src/content/posts'))
+const newestPosts = readdirSync(join(root, 'src/content/posts'))
   .filter((f) => f.endsWith('.md'))
   .map((f) => toBlogPost(f.replace(/\.md$/, ''), readFileSync(join(root, 'src/content/posts', f), 'utf8')))
   .filter((p) => !p.draft)
   .sort(byNewest)
+const posts = applyOrder(newestPosts, order.posts)
 
-const events = readdirSync(join(root, 'src/content/events'), { withFileTypes: true })
+const newestEvents = readdirSync(join(root, 'src/content/events'), { withFileTypes: true })
   .filter((d) => d.isDirectory() && existsSync(join(root, 'src/content/events', d.name, 'index.md')))
   .map((d) => toEvent(d.name, readFileSync(join(root, 'src/content/events', d.name, 'index.md'), 'utf8')))
   .filter((e) => !e.draft)
   .sort(byNewest)
+const events = applyOrder(newestEvents, order.events)
 
 // ---- head ----
 function headBlock(meta) {
@@ -53,30 +56,41 @@ function headBlock(meta) {
 }
 
 // ---- readable fallback bodies (replaced as soon as the app mounts) ----
-const nav = `<nav aria-label="Main"><a href="/">Home</a> | <a href="/about/">About</a> | <a href="/achievements/">Achievements</a> | <a href="/blog/">Journal</a> | <a href="/gallery/">Gallery</a></nav>`
+const nav = `<nav aria-label="Main">${site.nav.filter((l) => l.visible !== false).map((l) => `<a href="${esc(l.href)}">${esc(l.label)}</a>`).join(' | ')}</nav>`
 const wrap = (inner) => `<main style="font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:2rem;line-height:1.6">${nav}${inner}</main>`
 const postList = () => `<ul>${posts.map((p) => `<li><a href="/blog/${p.slug}/">${esc(p.title)}</a>: ${esc(p.summary)}</li>`).join('')}</ul>`
 const eventList = () => `<ul>${events.map((e) => `<li><a href="/gallery/${e.slug}/">${esc(e.title)}</a> (${esc(formatDate(e.date))}): ${esc(e.summary)}</li>`).join('')}</ul>`
 
+// Plain-HTML version of whatever sections a page has, so new sections are readable without JavaScript too.
+const SKIP = new Set(['id', 'type', 'visible', 'href', 'linkHref', 'buttonHref', 'style', 'display', 'count', 'event', 'heading', 'hidePhoto', 'current'])
+function text(value) {
+  if (Array.isArray(value)) return value.length ? `<ul>${value.map((v) => `<li>${text(v)}</li>`).join('')}</ul>` : ''
+  if (value && typeof value === 'object') return Object.entries(value).filter(([k]) => !SKIP.has(k)).map(([, v]) => text(v)).filter(Boolean).join(' ')
+  return typeof value === 'string' && value ? esc(value) : ''
+}
+
+function sections(key) {
+  return (site.pages[key]?.sections || [])
+    .filter((s) => s.visible !== false)
+    .map((s) => {
+      if (s.type === 'latestPosts' || s.type === 'postList') return `<h2>${esc(s.heading || 'Journal')}</h2>${postList()}`
+      if (s.type === 'galleryRail' || s.type === 'eventGrid') return `<h2>${esc(s.heading || 'Gallery')}</h2>${eventList()}`
+      const title = s.type === 'hero' ? `<h1>${esc(`${s.firstName} ${s.lastName}`)}</h1>` : s.type === 'intro' ? `<h1>${esc(s.title)}</h1>` : s.heading ? `<h2>${esc(s.heading)}</h2>` : ''
+      if (s.type === 'text') return title + marked.parse(s.body || '')
+      const rest = Object.entries(s).filter(([k]) => !SKIP.has(k) && !(s.type === 'hero' && (k === 'firstName' || k === 'lastName')) && !(s.type === 'intro' && k === 'title'))
+      return title + rest.map(([, v]) => { const t = text(v); return t && !t.startsWith('<ul>') ? `<p>${t}</p>` : t }).join('')
+    })
+    .join('\n')
+}
+
+const headed = (key) => () => wrap(`<h1>${esc(site.pages[key].title)}</h1><p>${esc(site.pages[key].lede)}</p>${sections(key)}`)
+
 const fallbacks = {
-  home: () =>
-    wrap(`<h1>Ovini Wijesooriya</h1>
-<p>Food Scientist, Emerging Researcher, Student Leader and Public Speaker from Sri Lanka.</p>
-<p>Ovini is a final-year BSc (Hons) Food Science &amp; Technology undergraduate at the University of Peradeniya and the Alfred Baur Gold Medalist (Most Outstanding Emerging Researcher) at FAuRS 2026. She also won Best Presenter and the Scientific Eye Photography competition, and was 1st Runner-up in Research Briefs (Sinhala).</p>
-<h2>From the journal</h2>${postList()}
-<h2>Event galleries</h2>${eventList()}
-<p><a href="https://www.linkedin.com/in/ovini-wijesooriya">LinkedIn</a> | <a href="https://www.facebook.com/OvWijesuriya">Facebook</a> | <a href="https://mealbridge.lk">MealBridge.lk</a></p>`),
-  about: () =>
-    wrap(`<h1>About Ovini Wijesooriya</h1>
-<h2>Research and projects</h2>${projects.map((p) => `<h3>${esc(p.title)}</h3><p>${esc(p.text)}</p>`).join('')}
-<h2>Experience</h2>${journey.map((g) => `<h3>${esc(g.label)}</h3><ul>${g.items.map((i) => `<li>${esc(i.role)}, ${esc(i.org)} (${esc(i.when)})</li>`).join('')}</ul>`).join('')}
-<h2>Education</h2><ul>${education.map((e) => `<li>${esc(e.title)}, ${esc(e.place)} (${esc(e.when)})</li>`).join('')}</ul>`),
-  achievements: () =>
-    wrap(`<h1>Awards and achievements</h1>
-<h2>FAuRS 2026</h2><ul><li>Alfred Baur Gold Medal, Most Outstanding Emerging Researcher</li>${faurs.map((f) => `<li>${esc(f.title)}: ${esc(f.sub)}</li>`).join('')}</ul>
-${wins.map((y) => `<h2>${esc(y.label)}</h2><ul>${y.items.map((w) => `<li>${esc(w.badge)}: ${esc(w.title)}, ${esc(w.org)}</li>`).join('')}</ul>`).join('')}`),
-  blog: () => wrap(`<h1>Journal</h1><p>The events I attend, what I achieve there, and what I'm building next.</p>${postList()}`),
-  gallery: () => wrap(`<h1>Gallery</h1><p>One gallery for each event, competition and trip.</p>${eventList()}`),
+  home: () => wrap(sections('home')),
+  about: () => wrap(sections('about')),
+  achievements: headed('achievements'),
+  blog: headed('blog'),
+  gallery: headed('gallery'),
   post: (p) => wrap(`<article><h1>${esc(p.title)}</h1><p>${esc(formatDate(p.date))} | ${esc(p.category)}</p>${marked.parse(p.body)}</article>`),
   event: (e) =>
     wrap(`<h1>${esc(e.title)}</h1><p>${esc(formatDate(e.date))}${e.place ? ` | ${esc(e.place)}` : ''}</p><p>${esc(e.summary)}</p>${marked.parse(e.body)}`),
@@ -86,6 +100,7 @@ ${wins.map((y) => `<h2>${esc(y.label)}</h2><ul>${y.items.map((w) => `<li>${esc(w
 // ---- write pages ----
 function render(meta, body) {
   return template
+    .replace('<span class="mark">Ovini<b>.</b></span>', () => `<span class="mark">${esc(site.brand)}<b>.</b></span>`)
     .replace(/<!--SEO:START-->[\s\S]*?<!--SEO:END-->/, `<!--SEO:START-->\n    ${headBlock(meta)}\n    <!--SEO:END-->`)
     .replace(/<!--FALLBACK:START-->[\s\S]*?<!--FALLBACK:END-->/, `<!--FALLBACK:START-->\n      ${body}\n      <!--FALLBACK:END-->`)
 }
@@ -107,7 +122,7 @@ const pages = [
 ]
 
 for (const [kind, item] of pages) {
-  const meta = pageMeta(kind, item)
+  const meta = pageMeta(kind, item || site.pages[kind])
   write(meta.path, render(meta, fallbacks[kind](item)))
 }
 write('/404.html', render(pageMeta('404'), fallbacks.notfound()))

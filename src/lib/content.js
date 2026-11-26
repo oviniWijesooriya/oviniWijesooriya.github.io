@@ -1,5 +1,6 @@
 import { marked } from 'marked'
-import { byNewest, toBlogPost, toEvent } from './frontmatter'
+import order from '../content/order.json'
+import { applyOrder, byNewest, toBlogPost, toEvent } from './frontmatter'
 
 const postFiles = import.meta.glob('../content/posts/*.md', { eager: true, query: '?raw', import: 'default' })
 const eventFiles = import.meta.glob('../content/events/*/index.md', { eager: true, query: '?raw', import: 'default' })
@@ -38,17 +39,19 @@ function withCover(item, photos = []) {
 const eventPhotos = groupPhotos(imageFiles, thumbFiles)
 const postPhotos = groupPhotos(postImageFiles, postThumbFiles)
 
-export const posts = Object.entries(postFiles)
+const newestPosts = Object.entries(postFiles)
   .map(([path, raw]) => toBlogPost(slugOf(path), raw))
   .filter((p) => !p.draft)
   .map((p) => withCover(p, postPhotos[p.slug]))
   .sort(byNewest)
+export const posts = applyOrder(newestPosts, order.posts)
 
-export const events = Object.entries(eventFiles)
+const newestEvents = Object.entries(eventFiles)
   .map(([path, raw]) => toEvent(eventSlugOf(path), raw))
   .filter((e) => !e.draft)
   .map((e) => withCover(e, eventPhotos[e.slug]))
   .sort(byNewest)
+export const events = applyOrder(newestEvents, order.events)
 
 export const getPost = (slug) => posts.find((p) => p.slug === slug)
 export const getEvent = (slug) => events.find((e) => e.slug === slug)

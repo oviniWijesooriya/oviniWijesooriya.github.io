@@ -35,6 +35,16 @@ export const yearOf = (value = '') => String(value).slice(0, 4)
 /** Newest first; `order` (higher first) breaks ties between items with the same date. */
 export const byNewest = (a, b) => b.date.localeCompare(a.date) || Number(b.order || 0) - Number(a.order || 0)
 
+/**
+ * Applies an order dragged in the dashboard (a list of slugs) to items already sorted newest first.
+ * Items not in the list, such as ones added since, stay on top.
+ */
+export function applyOrder(items, slugs = []) {
+  const place = new Map(slugs.map((slug, i) => [slug, i]))
+  const rank = (item) => (place.has(item.slug) ? place.get(item.slug) : -1)
+  return [...items].sort((a, b) => rank(a) - rank(b))
+}
+
 export const toBlogPost = (slug, raw) => {
   const { data, body } = parseFrontmatter(raw)
   return {

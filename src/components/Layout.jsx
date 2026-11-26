@@ -1,16 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import site, { contact } from '../data'
+import SmartLink from './SmartLink'
 import { scrollToTop, useReveal, useScrollVars, useSmoothScroll } from '../lib/motion'
 import BackToTop from './BackToTop'
 
-const links = [
-  { to: '/', label: 'Home', end: true },
-  { to: '/about/', label: 'About' },
-  { to: '/achievements/', label: 'Achievements' },
-  { to: '/blog/', label: 'Journal' },
-  { to: '/gallery/', label: 'Gallery' },
-]
+const links = site.nav.filter((l) => l.visible !== false).map((l) => ({ to: l.href, label: l.label, end: l.href === '/' }))
 
 function Header() {
   const [open, setOpen] = useState(false)
@@ -23,8 +18,9 @@ function Header() {
         Skip to content
       </a>
       <div className="container header-inner">
-        <Link to="/" className="brand" aria-label="Ovini Wijesooriya, home">
-          Ovini<span>.</span>
+        <Link to="/" className="brand" aria-label={`${site.brand}, home`}>
+          {site.brand}
+          <span>.</span>
         </Link>
         <nav aria-label="Main" className={`nav ${open ? 'is-open' : ''}`} id="main-nav">
           {links.map((l) => (
@@ -32,9 +28,11 @@ function Header() {
               {l.label}
             </NavLink>
           ))}
-          <a className="btn btn-gold btn-sm nav-cta" href={`mailto:${contact.email}`}>
-            Say hello
-          </a>
+          {site.headerButton?.label && (
+            <SmartLink className="btn btn-gold btn-sm nav-cta" href={site.headerButton.href}>
+              {site.headerButton.label}
+            </SmartLink>
+          )}
         </nav>
         <button type="button" className="menu-btn" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen((o) => !o)}>
           {open ? 'Close' : 'Menu'}
@@ -55,24 +53,11 @@ function Footer() {
           </a>
         </div>
         <ul className="footer-links" aria-label="Contact">
-          <li>
-            <a href={contact.phoneHref}>{contact.phone}</a>
-          </li>
-          <li>
-            <a href={contact.linkedin} target="_blank" rel="noreferrer">
-              LinkedIn
-            </a>
-          </li>
-          <li>
-            <a href={contact.facebook} target="_blank" rel="noreferrer">
-              Facebook
-            </a>
-          </li>
-          <li>
-            <a href="https://mealbridge.lk" target="_blank" rel="noreferrer">
-              MealBridge.lk
-            </a>
-          </li>
+          {(site.footer.links || []).map((l, i) => (
+            <li key={i}>
+              <SmartLink href={l.href}>{l.label}</SmartLink>
+            </li>
+          ))}
         </ul>
         <ul className="footer-links" aria-label="Site">
           {links.map((l) => (
@@ -84,7 +69,7 @@ function Footer() {
       </div>
       <div className="container footer-base">
         <span>© {new Date().getFullYear()} Ovini Wijesooriya</span>
-        <span>Peradeniya, Sri Lanka. References available on request.</span>
+        <span>{site.footer.note}</span>
       </div>
     </footer>
   )

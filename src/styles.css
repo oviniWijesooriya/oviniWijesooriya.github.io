@@ -344,8 +344,10 @@ html:not(.is-ready) .hero-name span, html:not(.is-ready) .hero-copy > *, html:no
 /* Lightbox */
 .lightbox { width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; color: var(--chalk); }
 .lightbox::backdrop { background: rgba(10, 22, 18, 0.95); }
-.lightbox-inner { display: flex; flex-direction: column; justify-content: center; gap: 14px; width: 100%; height: 100%; padding: 20px; }
-.lightbox-inner img { flex: 1; min-height: 0; width: 100%; object-fit: contain; animation: page-in 0.3s var(--ease); }
+.lightbox-inner { display: flex; flex-direction: column; justify-content: center; gap: 14px; width: 100%; height: 100%; padding: 20px; cursor: zoom-out; touch-action: none; user-select: none; }
+.lightbox-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.lightbox-stage img { max-width: 100%; max-height: 100%; width: auto; height: auto; cursor: default; animation: fade 0.3s ease; transition: transform 0.15s ease-out; }
+.lightbox-actions button { cursor: pointer; }
 .lightbox-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-weight: 600; }
 .lightbox-actions { display: flex; gap: 8px; }
 .lightbox-actions button {
@@ -578,7 +580,8 @@ html[data-scrolled] .site-header { box-shadow: 0 12px 28px -22px rgba(15, 36, 30
 .win-item:hover, .exp-item:hover, .now-row:hover { padding-left: 12px; background: rgba(221, 229, 214, 0.55); }
 .chips li { transition: background-color 0.25s, color 0.25s, transform 0.25s var(--ease); }
 .chips li:hover { background: var(--ink); color: var(--chalk); transform: translateY(-3px); }
-.footer-links a { display: inline-block; transition: transform 0.25s var(--ease), color 0.2s; }
+.footer-links { gap: 2px; }
+.footer-links a { display: inline-block; padding-block: 6px; transition: transform 0.25s var(--ease), color 0.2s; }
 .footer-links a:hover { transform: translateX(4px); }
 
 .to-top {
@@ -594,8 +597,68 @@ html[data-scrolled] .site-header { box-shadow: 0 12px 28px -22px rgba(15, 36, 30
 .to-top-ring circle { fill: none; stroke: var(--gold); stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--progress, 0)); }
 
 .lightbox[open] .lightbox-inner { animation: fade 0.3s ease both; }
+.lightbox[open] { display: block; }
 @keyframes fade { from { opacity: 0; } }
 html:has(dialog[open]) { overflow: hidden; }
+
+/* ============================================================
+   Extra section types added from the dashboard
+   ============================================================ */
+.text-section { max-width: 68ch; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 18px; }
+.info-card { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 28px; background: var(--mist); border-radius: 22px 22px 22px 64px; }
+.info-card h3 { font-size: 24px; font-weight: 650; letter-spacing: -0.03em; line-height: 1.15; }
+.info-card p { color: var(--muted); }
+.info-card .text-link { margin-top: auto; }
+.banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding: clamp(28px, 5vw, 56px); background: var(--ink); color: var(--chalk); border-radius: 32px 100px 32px 32px; }
+.banner .section-title { color: var(--chalk); }
+.banner p { max-width: 52ch; margin-top: 10px; color: #c5d3c9; }
+.photo-strip { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; padding-block: 4px; }
+.photo-strip li { flex: 0 0 min(280px, 70vw); }
+.photo-strip .photo img { aspect-ratio: 4 / 3; object-fit: cover; }
+
+/* ============================================================
+   Drag to scroll
+   ============================================================ */
+.drag-scroll { cursor: grab; -webkit-overflow-scrolling: touch; }
+.drag-scroll img, .drag-scroll a { -webkit-user-drag: none; user-select: none; }
+.drag-scroll.is-dragging { cursor: grabbing; scroll-snap-type: none !important; scroll-behavior: auto !important; user-select: none; }
+.drag-scroll.is-dragging * { cursor: grabbing !important; }
+
+/* ============================================================
+   Phones
+   ============================================================ */
+@media (max-width: 640px) {
+  :root { --gutter: 18px; }
+  /* one swipeable row of filters instead of a tall stack */
+  .filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--gutter) * -1); padding: 4px var(--gutter); }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter { flex: none; min-height: 44px; }
+  .block-head { align-items: center; }
+  .rail-tools { width: 100%; }
+  .rail-tools .text-link { margin-right: auto; }
+  .post-photos { column-count: 2; }
+  .post-photos li, .photo-wall li { margin-bottom: 8px; }
+  .photo-wall { column-count: 2; column-gap: 8px; }
+  .photo { border-radius: 10px; }
+  .footer-grid { gap: 28px; }
+  .footer-base { padding-bottom: 88px; } /* room for the back-to-top button */
+  .lightbox-inner { padding: 12px; }
+  .lightbox-bar { flex-wrap: wrap; justify-content: center; }
+  .to-top { right: 14px; bottom: 14px; width: 46px; height: 46px; }
+  /* stays out of the way while reading downwards */
+  .to-top.going-down { opacity: 0; visibility: hidden; transform: translateY(16px); }
+  .hero-actions { gap: 8px; }
+  .hero-actions .btn { flex: 1 1 auto; padding-inline: 14px; }
+}
+@media (hover: none) {
+  .drag-scroll { cursor: auto; }
+  /* no sticky hover states after a tap */
+  .event-card:hover, .project:hover, .btn:hover { transform: none; }
+}
+.text-link, .back-link { display: inline-block; padding-block: 6px; }
+h1, h2, h3, h4, .page-lede, .post-row-main p, .now-row dd, .award-list h3 { overflow-wrap: break-word; }
+.hero-copy, .page-head > *, .page-head-split > div { min-width: 0; }
 
 /* ============================================================
    Reduced motion

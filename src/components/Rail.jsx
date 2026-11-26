@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useDragScroll } from '../lib/useDragScroll'
 
 const Arrow = ({ flip }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -9,6 +10,7 @@ const Arrow = ({ flip }) => (
 /** Horizontal carousel: no scrollbar, arrow buttons, and swipe on touch screens. */
 export default function Rail({ id, title, action, children }) {
   const ref = useRef(null)
+  useDragScroll(ref)
   const [at, setAt] = useState({ start: true, end: false })
 
   const measure = useCallback(() => {
@@ -49,7 +51,7 @@ export default function Rail({ id, title, action, children }) {
           </button>
         </div>
       </div>
-      <ul className="rail" ref={ref} onScroll={measure} aria-labelledby={id}>
+      <ul className="rail drag-scroll" ref={ref} onScroll={measure} aria-labelledby={id}>
         {children}
       </ul>
     </>

@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { byNewest, formatDate } from '../lib/frontmatter'
+import { formatDate } from '../lib/frontmatter'
 import DrivePhotos from './DrivePhotos'
 import { ConfirmButton, MarkdownEditor } from './Editor'
 import { slugify, toMarkdownFile } from './files'
+import OrderedList from './OrderedList'
 
 const today = () => new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
 const DATE_PATTERN = '\\d{4}(-\\d{2}(-\\d{2})?)?'
@@ -115,9 +116,7 @@ function PostForm({ post, posts, events, busy, save, close, open, photoProps }) 
   )
 }
 
-export default function PostsPanel({ posts, events, busy, save, editing, setEditing, photoProps }) {
-  const sorted = [...posts].sort((a, b) => byNewest({ date: '', ...a.data }, { date: '', ...b.data }))
-
+export default function PostsPanel({ posts, events, busy, save, editing, setEditing, photoProps, order, saveOrder }) {
   if (editing !== null) {
     return (
       <PostForm
@@ -142,19 +141,17 @@ export default function PostsPanel({ posts, events, busy, save, editing, setEdit
           Write a post
         </button>
       </div>
-      {sorted.length === 0 && <p>No posts yet. Write the first one.</p>}
-      <ul className="a-rows">
-        {sorted.map((p) => (
-          <li key={p.slug}>
-            <button type="button" onClick={() => setEditing(p.slug)}>
-              <strong>{p.data.title || p.slug}</strong>
-              <span>{formatDate(p.data.date)}</span>
-              <span>{p.data.category}</span>
-              {p.data.draft === 'true' && <em>Draft</em>}
-            </button>
-          </li>
-        ))}
-      </ul>
+      {posts.length === 0 && <p>No posts yet. Write the first one.</p>}
+      <OrderedList items={posts} order={order} busy={busy} saveOrder={saveOrder} open={setEditing}>
+        {(p) => (
+          <>
+            <strong>{p.data.title || p.slug}</strong>
+            <span>{formatDate(p.data.date)}</span>
+            <span>{p.data.category}</span>
+            {p.data.draft === 'true' && <em>Draft</em>}
+          </>
+        )}
+      </OrderedList>
     </>
   )
 }

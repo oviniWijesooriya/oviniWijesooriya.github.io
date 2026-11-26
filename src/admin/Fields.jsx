@@ -1,3 +1,7 @@
+import { useState } from 'react'
+import { blankValue } from './schema'
+import Sortable from './Sortable'
+
 export const getPath = (obj, path) => path.split('.').reduce((o, k) => o?.[k], obj)
 
 export function setPath(obj, path, value) {
@@ -5,32 +9,35 @@ export function setPath(obj, path, value) {
   return { ...obj, [key]: rest.length ? setPath(obj?.[key] ?? {}, rest.join('.'), value) : value }
 }
 
-const blank = (fields) => Object.fromEntries(fields.map((f) => [f.key, f.type === 'bool' ? false : f.type === 'objects' || f.type === 'strings' ? [] : '']))
-
-function move(list, from, to) {
-  const next = [...list]
-  next.splice(to, 0, ...next.splice(from, 1))
-  return next
-}
-
-function RowTools({ list, index, onChange }) {
+/** One entry of a list of objects: a collapsible card with a drag handle. */
+function ObjectItem({ def, item, onChange, handle, remove, events }) {
+  const first = def.fields[0].key
+  const [open, setOpen] = useState(() => !item[first])
+  const name = item[first] || item.title || item.label || 'New item'
   return (
-    <div className="a-row-tools">
-      <button type="button" className="a-link" disabled={index === 0} onClick={() => onChange(move(list, index, index - 1))}>
-        Move up
-      </button>
-      <button type="button" className="a-link" disabled={index === list.length - 1} onClick={() => onChange(move(list, index, index + 1))}>
-        Move down
-      </button>
-      <button type="button" className="a-link a-danger-text" onClick={() => onChange(list.filter((_, i) => i !== index))}>
-        Remove
-      </button>
-    </div>
+    <>
+      <div className="a-item-head">
+        {handle}
+        <button type="button" className="a-item-name" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          {name}
+        </button>
+        <button type="button" className="a-link a-danger-text" onClick={remove}>
+          Remove
+        </button>
+      </div>
+      {open && (
+        <div className="a-item-body">
+          {def.fields.map((f) => (
+            <Field key={f.key} def={f} value={item[f.key]} events={events} onChange={(v) => onChange({ ...item, [f.key]: v })} />
+          ))}
+        </div>
+      )}
+    </>
   )
 }
 
-/** One form control, driven by a schema entry. `objects` fields nest. */
-export default function Field({ def, value, onChange }) {
+/** One form control, driven by a schema entry. Lists can be reordered by dragging. */
+export default function Field({ def, value, onChange, events }) {
   if (def.type === 'bool') {
     return (
       <label className="a-check">
@@ -39,45 +46,49 @@ export default function Field({ def, value, onChange }) {
     )
   }
 
-  if (def.type === 'strings') {
+  if (def.type === 'strings' || def.type === 'objects') {
     const list = value || []
+    const plain = def.type === 'strings'
+    const update = (i, next) => onChange(list.map((v, j) => (j === i ? next : v)))
+    const blank = () => (plain ? '' : Object.fromEntries(def.fields.map((f) => [f.key, f.key === 'visible' ? true : blankValue(f)])))
     return (
       <fieldset className="a-list">
         <legend>{def.label}</legend>
-        {list.map((item, i) => (
-          <div key={i} className="a-item">
-            <input aria-label={`${def.label} ${i + 1}`} value={item} onChange={(e) => onChange(list.map((v, j) => (j === i ? e.target.value : v)))} />
-            <RowTools list={list} index={i} onChange={onChange} />
-          </div>
-        ))}
-        <button type="button" className="a-btn a-btn-quiet" onClick={() => onChange([...list, ''])}>
-          Add
+        <Sortable items={list} onChange={onChange} className="a-sort" itemClassName={() => 'a-item'}>
+          {(item, i, { handle, remove }) =>
+            plain ? (
+              <div className="a-item-head">
+                {handle}
+                <input aria-label={`${def.label} ${i + 1}`} value={item} onChange={(e) => update(i, e.target.value)} />
+                <button type="button" className="a-link a-danger-text" onClick={remove}>
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <ObjectItem def={def} item={item} events={events} handle={handle} remove={remove} onChange={(next) => update(i, next)} />
+            )
+          }
+        </Sortable>
+        <button type="button" className="a-btn a-btn-quiet" onClick={() => onChange([...list, blank()])}>
+          Add to {def.label.toLowerCase()}
         </button>
       </fieldset>
     )
   }
 
-  if (def.type === 'objects') {
-    const list = value || []
+  if (def.type === 'select' || def.type === 'event') {
+    const options = def.type === 'event' ? [['', 'Choose an event'], ...(events || []).map((e) => [e.slug, e.data.title || e.slug])] : def.options
     return (
-      <fieldset className="a-list">
-        <legend>{def.label}</legend>
-        {list.map((item, i) => {
-          const name = item[def.fields[0].key] || item.title || `Item ${i + 1}`
-          return (
-            <details key={i} className="a-item" open={!item[def.fields[0].key]}>
-              <summary>{name}</summary>
-              {def.fields.map((f) => (
-                <Field key={f.key} def={f} value={item[f.key]} onChange={(v) => onChange(list.map((it, j) => (j === i ? { ...it, [f.key]: v } : it)))} />
-              ))}
-              <RowTools list={list} index={i} onChange={onChange} />
-            </details>
-          )
-        })}
-        <button type="button" className="a-btn a-btn-quiet" onClick={() => onChange([...list, blank(def.fields)])}>
-          Add to {def.label.toLowerCase()}
-        </button>
-      </fieldset>
+      <label className="a-field">
+        <span>{def.label}</span>
+        <select value={value || options[0][0]} onChange={(e) => onChange(e.target.value)}>
+          {options.map(([v, label]) => (
+            <option key={v} value={v}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
     )
   }
 

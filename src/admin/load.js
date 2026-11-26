@@ -26,5 +26,11 @@ export async function loadContent(client) {
   const siteFile = files.find((f) => f.path === 'src/content/site.json')
   if (!siteFile) throw new Error('src/content/site.json is not on this branch yet. Push the latest version of the site first.')
 
-  return { posts, events, site: JSON.parse(await client.text(siteFile.sha)), siteSha: siteFile.sha }
+  const site = JSON.parse(await client.text(siteFile.sha))
+  if (!site.pages) throw new Error('The site content on this branch is in the old format. Push the latest version of the site first.')
+
+  const orderFile = files.find((f) => f.path === 'src/content/order.json')
+  const order = orderFile ? JSON.parse(await client.text(orderFile.sha)) : { posts: [], events: [] }
+
+  return { posts, events, site, siteSha: siteFile.sha, order, orderSha: orderFile?.sha }
 }

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
+import Lightbox from '../components/Lightbox'
 import { ConfirmButton } from './Editor'
 import { manifestList, thumbUrl } from './drive'
 import { resizeImage } from './files'
+import Sortable from './Sortable'
 
 const stem = (name) => name.replace(/\.[^.]+$/, '')
 /** The value stored in `cover:`. The build names its copies after the end of the Drive file id. */
@@ -15,6 +17,7 @@ export default function DrivePhotos({ drive, manifest, path, cover, onCover, onC
   const [files, setFiles] = useState(null)
   const [selected, setSelected] = useState([])
   const [status, setStatus] = useState('')
+  const [preview, setPreview] = useState(null)
 
   const refresh = useCallback(async () => {
     if (!drive) return setFiles(manifestList(manifest, path))
@@ -55,17 +58,10 @@ export default function DrivePhotos({ drive, manifest, path, cover, onCover, onC
       done()
     })
 
-  /** Moves the selected photos one step, then renumbers the files so the order sticks. */
-  const move = (step) =>
-    run('Reordering…', async (done) => {
-      const order = [...files]
-      const picked = step < 0 ? order.filter((f) => selected.includes(f.id)) : order.filter((f) => selected.includes(f.id)).reverse()
-      for (const file of picked) {
-        const from = order.indexOf(file)
-        const to = from + step
-        if (to < 0 || to >= order.length || selected.includes(order[to].id)) continue
-        order.splice(to, 0, ...order.splice(from, 1))
-      }
+  /** Shows the new order at once, then renumbers the files in Drive so it sticks. */
+  const reorder = (order) => {
+    setFiles(order)
+    run('Saving the new order…', async (done) => {
       const renames = order
         .map((f, i) => ({ id: f.id, name: `${String(i + 1).padStart(2, '0')}${f.name.slice(stem(f.name).length).toLowerCase()}`, was: f.name }))
         .filter((r) => r.name !== r.was)
@@ -75,6 +71,7 @@ export default function DrivePhotos({ drive, manifest, path, cover, onCover, onC
         done()
       }
     })
+  }
 
   const upload = (e) => {
     const input = e.target
@@ -124,12 +121,6 @@ export default function DrivePhotos({ drive, manifest, path, cover, onCover, onC
                 {selected.length === files.length ? 'Clear selection' : 'Select all'}
               </button>
               <span>{selected.length} selected</span>
-              <button type="button" className="a-btn a-btn-quiet" disabled={busy || !selected.length} onClick={() => move(-1)}>
-                Move earlier
-              </button>
-              <button type="button" className="a-btn a-btn-quiet" disabled={busy || !selected.length} onClick={() => move(1)}>
-                Move later
-              </button>
               <button type="button" className="a-btn a-btn-quiet" disabled={busy || !one} onClick={() => onCover(coverKey(one))}>
                 Use as cover
               </button>
@@ -140,25 +131,41 @@ export default function DrivePhotos({ drive, manifest, path, cover, onCover, onC
               )}
             </div>
           )}
-          <ul className="a-photos">
-            {files.map((file, i) => {
+          {drive && files.length > 1 && <p className="a-hint">Drag a photo to move it. On a phone, press and hold first. Tap to select.</p>}
+          <Sortable
+            items={files}
+            getId={(f) => f.id}
+            onChange={reorder}
+            grid
+            disabled={!drive || busy}
+            className="a-photos"
+            itemClassName={(f) => (selected.includes(f.id) ? 'is-selected' : '')}
+          >
+            {(file, i) => {
               const isCover = cover ? cover === coverKey(file) : i === 0
               return (
-                <li key={file.id} className={selected.includes(file.id) ? 'is-selected' : ''}>
+                <>
                   <button type="button" className="a-photo" disabled={!drive || busy} aria-pressed={selected.includes(file.id)} aria-label={`Select ${file.name}`} onClick={() => toggle(file.id)}>
-                    <img src={thumbUrl(file.id, 320)} alt={file.name} loading="lazy" referrerPolicy="no-referrer" />
+                    <img src={thumbUrl(file.id, 320)} alt={file.name} loading="lazy" referrerPolicy="no-referrer" draggable="false" />
                   </button>
                   <span>
                     {file.name}
                     {isCover && <em className="a-new"> Cover</em>}
                   </span>
-                  <a href={`https://drive.google.com/file/d/${file.id}/view`} target="_blank" rel="noreferrer">
-                    Open
-                  </a>
-                </li>
+                  <button type="button" className="a-link" onClick={() => setPreview(i)}>
+                    View
+                  </button>
+                </>
               )
-            })}
-          </ul>
+            }}
+          </Sortable>
+          <Lightbox
+            photos={files.map((f) => ({ src: thumbUrl(f.id, 1600) }))}
+            index={preview}
+            title="Photo"
+            onClose={() => setPreview(null)}
+            onChange={setPreview}
+          />
           {files.length === 0 && <p>No photos yet.</p>}
         </>
       )}

@@ -14,7 +14,13 @@ Built with **React + Vite + React Router**. Every page is also prerendered to it
 
 ## Admin dashboard (`/admin/`)
 
-A dashboard with a left sidebar: **Overview**, **Journal**, **Gallery** and **Site details**. Every save is a commit to this repository, which redeploys the site in a few minutes.
+Everything on the site is edited here. Every save is a commit to this repository, which redeploys the site in a few minutes.
+
+- **Pages:** each page is a list of sections. Drag to reorder, hide, remove, edit headings and content, or add new sections (text, cards, list, banner, facts, photos from an event, latest posts, event slider, awards, projects, experience, timeline, skills). Page titles and search descriptions are here too.
+- **Menu and footer / Contact and portrait:** menu items, brand name, top button, footer text and links, contact details, portrait.
+- **Journal and Gallery:** write and edit posts and events. Drag the list to set your own order, or go back to newest first. Photos can be dragged into order.
+
+On a phone, press and hold a photo before dragging it; list items are dragged by their handle.
 
 **First visit on a device:** choose an admin username and password and paste a [fine-grained GitHub token](https://github.com/settings/personal-access-tokens/new) (only this repository, **Contents: Read and write**, with an expiry date). After that you log in with just the username and password.
 
@@ -105,7 +111,7 @@ Write the post in Markdown. Use `##` for headings, `-` for lists, `**bold**`, an
 
 ## Other content
 
-Home and about text, awards, experience, education, projects and contact details live in `src/content/site.json`. The portrait is `public/ovini.jpg`. The forms in the dashboard are described in `src/admin/schema.js`. Search-engine profile data is in `src/lib/seo-data.js`.
+Pages, menu, footer and contact details live in `src/content/site.json`; a manual order of posts or events in `src/content/order.json`; the portrait is `public/ovini.jpg`. Section types are drawn by `src/components/sections.jsx` and their dashboard forms are in `src/admin/schema.js`. Search-engine profile data is in `src/lib/seo-data.js`.
 
 ## SEO
 
