@@ -12,8 +12,9 @@ function Wordmark({ name }) {
   useEffect(() => {
     // reset only after it has left completely, so it plays again next time
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.intersectionRatio >= 0.6) setShown(true)
+      (entries) => {
+        const entry = entries[entries.length - 1]
+        if (entry.intersectionRatio >= 0.55) setShown(true)
         else if (!entry.isIntersecting) setShown(false)
       },
       { threshold: [0, 0.6] },

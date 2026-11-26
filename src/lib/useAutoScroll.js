@@ -5,7 +5,8 @@ const TURN_PAUSE = 1500 // rest at each end before heading back
 
 /**
  * Slowly glides a sideways list back and forth while it is on screen.
- * It waits while the visitor hovers, touches, drags, scrolls or tabs through it.
+ * It waits while the visitor points at it, holds it, scrolls it sideways or tabs through it.
+ * Scrolling the page past it does not stop it, even with the mouse or a finger over it.
  * Returns `hold(ms)` for controls outside the list, such as arrow buttons.
  */
 export function useAutoScroll(ref, enabled) {
@@ -24,7 +25,9 @@ export function useAutoScroll(ref, enabled) {
     let direction = 1
     let visible = false
     let hovered = false
+    let travelled = 0 // how far the mouse itself has moved over the list
     let pressed = false
+    let pressedAt = 0 // where the list was when it was pressed
     let focused = false
 
     const tick = (now) => {
@@ -45,27 +48,45 @@ export function useAutoScroll(ref, enabled) {
       frame = requestAnimationFrame(tick)
     }
 
-    const observer = new IntersectionObserver(([entry]) => (visible = entry.intersectionRatio >= 0.5), { threshold: [0, 0.5] })
+    // the last entry is the current one; the test sits below the threshold because the reported
+    // ratio can fall a hair short of it, and no second report would follow
+    const observer = new IntersectionObserver((entries) => (visible = entries[entries.length - 1].intersectionRatio >= 0.3), { threshold: [0, 0.35] })
     observer.observe(el)
 
+    const press = () => {
+      pressed = true
+      pressedAt = el.scrollLeft
+    }
     const on = {
-      pointerenter: (e) => e.pointerType === 'mouse' && (hovered = true),
-      pointerleave: () => (hovered = false),
-      mousedown: () => (pressed = true),
-      touchstart: () => (pressed = true),
+      // Only real mouse movement counts as pointing: a page scrolling under a resting mouse
+      // also "enters" the list, which used to stop it before it had started.
+      pointermove: (e) => {
+        if (e.pointerType !== 'mouse') return
+        travelled += Math.abs(e.movementX) + Math.abs(e.movementY)
+        if (travelled > 6) hovered = true
+      },
+      pointerleave: () => {
+        hovered = false
+        travelled = 0
+      },
+      mousedown: press,
+      touchstart: press,
       touchend: () => release(),
       touchcancel: () => release(),
-      wheel: () => hold(3000),
+      // sideways only: scrolling up or down the page is not about this list
+      wheel: (e) => (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) && hold(3000),
       focusin: (e) => (focused = e.target.matches(':focus-visible')),
       focusout: () => (focused = false),
     }
+    // rest a while only if the visitor actually moved the list
     const release = () => {
       if (!pressed) return
       pressed = false
-      hold(3000)
+      if (Math.abs(el.scrollLeft - pressedAt) > 2) hold(3000)
     }
     Object.entries(on).forEach(([type, fn]) => el.addEventListener(type, fn, { passive: true }))
     addEventListener('mouseup', release)
+    addEventListener('blur', release) // a release outside the window is never reported
     el.classList.add('is-auto')
     frame = requestAnimationFrame(tick)
 
@@ -74,6 +95,7 @@ export function useAutoScroll(ref, enabled) {
       observer.disconnect()
       Object.entries(on).forEach(([type, fn]) => el.removeEventListener(type, fn))
       removeEventListener('mouseup', release)
+      removeEventListener('blur', release)
       el.classList.remove('is-auto')
     }
   }, [ref, enabled, hold])

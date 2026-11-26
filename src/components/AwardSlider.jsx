@@ -96,7 +96,7 @@ export default function AwardSlider({ s }) {
 
   useEffect(() => {
     if (!track.current) return
-    const observer = new IntersectionObserver(([entry]) => setVisible(entry.intersectionRatio >= 0.5), { threshold: [0, 0.5] })
+    const observer = new IntersectionObserver((entries) => setVisible(entries[entries.length - 1].intersectionRatio >= 0.45), { threshold: [0, 0.5] })
     observer.observe(track.current.firstElementChild)
     return () => observer.disconnect()
   }, [total])
