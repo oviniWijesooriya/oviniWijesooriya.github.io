@@ -8,7 +8,7 @@ const Arrow = ({ flip }) => (
   </svg>
 )
 
-const PlayPause = ({ playing }) => (
+export const PlayPause = ({ playing }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d={playing ? 'M7 5h3.5v14H7zM13.5 5H17v14h-3.5z' : 'M8 5l11 7-11 7z'} />
   </svg>

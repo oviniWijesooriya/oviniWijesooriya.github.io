@@ -12,11 +12,6 @@ export function scrollToTop({ immediate = false } = {}) {
   else window.scrollTo({ top: 0, behavior: immediate || reduced() ? 'instant' : 'smooth' })
 }
 
-export function scrollToY(y) {
-  if (lenis) lenis.scrollTo(y)
-  else window.scrollTo({ top: y, behavior: reduced() ? 'instant' : 'smooth' })
-}
-
 export function useSmoothScroll() {
   useEffect(() => {
     if (reduced()) return
