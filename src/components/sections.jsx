@@ -9,6 +9,7 @@ import { EventCard, PostRow } from './Cards'
 import ContactForm from './ContactForm'
 import FeaturedAward from './FeaturedAward'
 import Lightbox from './Lightbox'
+import NowPanels from './NowPanels'
 import Prose from './Prose'
 import Rail from './Rail'
 import Ribbons from './Ribbons'
@@ -110,20 +111,11 @@ function Intro({ s }) {
   )
 }
 
-function Facts({ s }) {
-  return (
-    <Block s={s} className="now">
-      <dl className="now-list">
-        {list(s.items).map((r, i) => (
-          <div key={i} className="now-row">
-            <dt>{r.k}</dt>
-            <dd>{r.href ? <SmartLink href={r.href}>{r.v}</SmartLink> : r.v}</dd>
-          </div>
-        ))}
-      </dl>
-    </Block>
-  )
-}
+const Facts = ({ s }) => (
+  <Block s={s}>
+    <NowPanels id={s.id} items={list(s.items)} />
+  </Block>
+)
 
 function LatestPosts({ s }) {
   return (

@@ -33,7 +33,7 @@ const REVEAL = [
   '.page-head > *',
   '.block-head',
   '.section-title',
-  '.now-row',
+  '.now-panels',
   '.post-row',
   '.rail > li',
   '.event-grid > li',
