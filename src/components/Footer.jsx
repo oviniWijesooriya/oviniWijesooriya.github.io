@@ -1,37 +1,22 @@
-// The footer: a closing line and email, the links, and the site name set large.
-// The letters rise into place whenever it scrolls into view.
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+// The footer: a closing line and email, the links, and the site name with the small print.
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import site, { contact } from '../data'
 import SmartLink from './SmartLink'
 
-/** The name from the header, set as large as fits the width and a good part of the screen's height. */
+/** The name from the header. Its letters rise into place each time it comes into view (the preloader does the same). */
 function Wordmark({ name }) {
   const box = useRef(null)
-  const word = useRef(null)
   const [shown, setShown] = useState(false)
 
-  useLayoutEffect(() => {
-    const fit = () => {
-      const el = word.current
-      el.style.fontSize = '100px'
-      const widest = (100 * box.current.clientWidth) / el.offsetWidth
-      el.style.fontSize = `${Math.min(widest, 360, innerHeight * 0.42)}px`
-    }
-    const observer = new ResizeObserver(fit)
-    observer.observe(box.current)
-    document.fonts?.ready.then(() => box.current && fit())
-    return () => observer.disconnect()
-  }, [name])
-
   useEffect(() => {
-    // shown once a third is on screen; reset only after it has left completely, so it plays again next time
+    // reset only after it has left completely, so it plays again next time
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.intersectionRatio >= 0.3) setShown(true)
+        if (entry.intersectionRatio >= 0.6) setShown(true)
         else if (!entry.isIntersecting) setShown(false)
       },
-      { threshold: [0, 0.3] },
+      { threshold: [0, 0.6] },
     )
     observer.observe(box.current)
     return () => observer.disconnect()
@@ -39,18 +24,16 @@ function Wordmark({ name }) {
 
   const letters = [...name]
   return (
-    <div className="container">
-      <Link ref={box} to="/" className={`footer-word ${shown ? 'is-in' : ''}`} aria-label={`${name}, home`}>
-        <span ref={word} aria-hidden="true">
-          {letters.map((letter, i) => (
-            <span key={i} className="footer-letter" style={{ '--i': i }}>
-              {letter === ' ' ? ' ' : letter}
-            </span>
-          ))}
-          <span className="footer-dot" style={{ '--i': letters.length }} />
-        </span>
-      </Link>
-    </div>
+    <Link ref={box} to="/" className={`footer-word ${shown ? 'is-in' : ''}`} aria-label={`${name}, home`}>
+      <span aria-hidden="true">
+        {letters.map((letter, i) => (
+          <span key={i} className="footer-letter" style={{ '--i': i }}>
+            {letter === ' ' ? '\u00a0' : letter}
+          </span>
+        ))}
+        <span className="footer-dot" style={{ '--i': letters.length }} />
+      </span>
+    </Link>
   )
 }
 
@@ -83,11 +66,12 @@ export default function Footer({ links }) {
         </ul>
       </div>
 
-      <Wordmark name={site.brand} />
-
       <div className="container footer-base">
-        <span>© {new Date().getFullYear()} Ovini Wijesooriya</span>
-        <span>{site.footer.note}</span>
+        <Wordmark name={site.brand} />
+        <p className="footer-small">
+          <span>© {new Date().getFullYear()} Ovini Wijesooriya</span>
+          <span>{site.footer.note}</span>
+        </p>
       </div>
     </footer>
   )

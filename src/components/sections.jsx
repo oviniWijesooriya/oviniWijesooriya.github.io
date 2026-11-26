@@ -9,6 +9,7 @@ import FeaturedAward from './FeaturedAward'
 import Lightbox from './Lightbox'
 import Prose from './Prose'
 import Rail from './Rail'
+import Ribbons from './Ribbons'
 import ScrollRow from './ScrollRow'
 import SmartLink from './SmartLink'
 import YearLine from './YearLine'
@@ -373,6 +374,11 @@ const TYPES = {
   featuredAward: Featured,
   awardYears: YearLine,
   list: List,
+  ribbons: ({ s }) => (
+    <Block s={s}>
+      <Ribbons items={list(s.items)} />
+    </Block>
+  ),
   text: Text,
   cards: Cards,
   callout: Callout,

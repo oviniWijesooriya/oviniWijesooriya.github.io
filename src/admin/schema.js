@@ -38,6 +38,7 @@ export const SECTION_TYPES = {
   text: { icon: 'text', about: 'A heading with free text, lists and links.', label: 'Text', fields: [heading, area('body', 'Text (Markdown: **bold**, - lists, [links](https://…))', { rows: 8 })] },
   cards: { icon: 'cards', about: 'A row of cards, each with a title, text and link.', label: 'Cards', fields: [heading, objects('items', 'Cards', [text('title', 'Title'), area('text', 'Text'), text('href', 'Link address (optional)'), text('linkLabel', 'Link text')])] },
   list: { icon: 'list', about: 'A heading with short lines underneath.', label: 'Simple list', fields: [heading, strings('items', 'Lines')] },
+  ribbons: { icon: 'flag', about: 'Short honours hung side by side as ribbons.', label: 'Ribbons', fields: [heading, objects('items', 'Ribbons', [text('title', 'Short title'), area('text', 'Details')])] },
   callout: { icon: 'flag', about: 'A dark banner with a message and a button.', label: 'Banner with button', fields: [heading, area('text', 'Text'), text('buttonLabel', 'Button text'), text('buttonHref', 'Button address')] },
   facts: { icon: 'list', about: 'Labelled rows, such as Studying or Building.', label: 'Facts table', fields: [heading, objects('items', 'Rows', [text('k', 'Label'), area('v', 'Text'), text('href', 'Link (optional)')])] },
   latestPosts: { icon: 'post', about: 'Your newest journal posts.', label: 'Latest journal posts', fields: [heading, text('linkLabel', 'Link text to the journal'), text('count', 'How many posts')] },

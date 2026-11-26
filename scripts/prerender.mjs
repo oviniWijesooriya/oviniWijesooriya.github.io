@@ -32,6 +32,11 @@ const newestEvents = readdirSync(join(root, 'src/content/events'), { withFileTyp
   .sort(byNewest)
 const events = applyOrder(newestEvents, order.events)
 
+// The preloader spells the name from the header, one letter at a time.
+const letters = [...site.brand]
+const mark = `${letters.map((c, i) => `<span style="--i:${i}">${c === ' ' ? '&nbsp;' : esc(c)}</span>`).join('')}<b style="--i:${letters.length}"></b>`
+const shell = template.replace(/<span class="mark">[\s\S]*?<\/span><!--MARK:END-->/, () => `<span class="mark">${mark}</span><!--MARK:END-->`)
+
 // ---- head ----
 function headBlock(meta) {
   const lines = [
@@ -99,8 +104,7 @@ const fallbacks = {
 
 // ---- write pages ----
 function render(meta, body) {
-  return template
-    .replace('<span class="mark">Ovini<b>.</b></span>', () => `<span class="mark">${esc(site.brand)}<b>.</b></span>`)
+  return shell
     .replace(/<!--SEO:START-->[\s\S]*?<!--SEO:END-->/, `<!--SEO:START-->\n    ${headBlock(meta)}\n    <!--SEO:END-->`)
     .replace(/<!--FALLBACK:START-->[\s\S]*?<!--FALLBACK:END-->/, `<!--FALLBACK:START-->\n      ${body}\n      <!--FALLBACK:END-->`)
 }

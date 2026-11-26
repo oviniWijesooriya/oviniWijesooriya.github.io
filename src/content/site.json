@@ -514,14 +514,26 @@
         },
         {
           "id": "further",
-          "type": "list",
+          "type": "ribbons",
           "visible": true,
           "heading": "Further recognition",
           "items": [
-            "Featured in Research Highlights as Best Presenter of the Department of Food Science & Technology",
-            "Nominated by the Department for the Scientific Merit Award",
-            "Scientific Eye photograph selected for the cover of Hanthana Blossoms",
-            "Research brief selected for publication in Hanthana Blossoms"
+            {
+              "title": "Research Highlights",
+              "text": "Featured as Best Presenter of the Department of Food Science & Technology"
+            },
+            {
+              "title": "Scientific Merit Award",
+              "text": "Nominated by the Department"
+            },
+            {
+              "title": "Magazine cover",
+              "text": "Scientific Eye photograph selected for the cover of Hanthana Blossoms"
+            },
+            {
+              "title": "Published brief",
+              "text": "Research brief selected for publication in Hanthana Blossoms"
+            }
           ]
         }
       ]

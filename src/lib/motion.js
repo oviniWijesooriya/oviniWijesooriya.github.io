@@ -137,7 +137,8 @@ export function dismissPreloader() {
   const portrait = new Image()
   portrait.src = '/ovini.jpg'
   const assets = Promise.all([document.fonts?.ready, portrait.decode().catch(() => {})])
-  const minimum = reduced() ? 0 : Math.max(0, 1100 - performance.now())
+  // long enough for the name to finish rising and its dot to land
+  const minimum = reduced() ? 0 : Math.max(0, 1900 - performance.now())
 
   // Never hold the page longer than 3.5s, however slow the network.
   Promise.all([wait(minimum), Promise.race([assets, wait(3500)])]).then(() => {
